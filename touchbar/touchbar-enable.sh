@@ -83,7 +83,7 @@ fi
 # fnmode/idle/dim are settable at load time even though their sysfs entries are 0444.
 # Match Omarchy idle: dim ~screensaver (150s), off ~lock (300s). -1 never dims.
 if ! grep -q '^apple_ib_tb ' /proc/modules; then
-	timeout 45 insmod "$WORK/apple-ib-tb.ko" fnmode=0 idle_timeout=300 dim_timeout=150 || { log "apple_ib_tb failed to load"; exit 1; }
+	timeout 45 insmod "$WORK/apple-ib-tb.ko" fnmode=1 idle_timeout=300 dim_timeout=150 || { log "apple_ib_tb failed to load"; exit 1; }
 	log "apple_ib_tb loaded"
 fi
 
@@ -107,13 +107,14 @@ if ! tb_attr_dir >/dev/null; then
 	log "no writable controls yet — reloading apple_ib_tb to re-probe"
 	timeout 30 rmmod apple_ib_tb 2>/dev/null || log "rmmod apple_ib_tb failed (continuing)"
 	sleep 1
-	timeout 45 insmod "$WORK/apple-ib-tb.ko" fnmode=0 idle_timeout=300 dim_timeout=150 || log "reload failed"
+	timeout 45 insmod "$WORK/apple-ib-tb.ko" fnmode=1 idle_timeout=300 dim_timeout=150 || log "reload failed"
 	sleep 2
 fi
 
 # ── 5. settings, and report ──────────────────────────────────────────────────────────────
 if d=$(tb_attr_dir); then
-	printf '%s' '0'   > "$d/fnmode"       2>/dev/null || true
+	# 1 = media keys; F-keys while Fn held. Esc stays. Matches Omarchy XF86 binds.
+	printf '%s' '1'   > "$d/fnmode"       2>/dev/null || true
 	printf '%s' '300' > "$d/idle_timeout" 2>/dev/null || true
 	printf '%s' '150' > "$d/dim_timeout"  2>/dev/null || true
 	log "SUCCESS: fnmode=$(cat "$d/fnmode") idle=$(cat "$d/idle_timeout") dim=$(cat "$d/dim_timeout")"

@@ -1,0 +1,12 @@
+[Unit]
+Description=NVMe d3cold_allowed=0 (0000:02:00.0)
+After=multi-user.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# Do not backslash-escape colons; systemd treats \: as an unknown escape.
+ExecStart=/bin/sh -c 'echo 0 > /sys/bus/pci/devices/0000:02:00.0/d3cold_allowed'
+
+[Install]
+WantedBy=multi-user.target
