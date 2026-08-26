@@ -6,8 +6,8 @@ Speakers work. Mic is quiet (same as macOS).
 
 Apps see a **stereo** sink `cs8409_speakers`. Playback is 4ch onto analog-surround-40:
 
-- FL/FR → tweeter DAC `0x02` channel 0 (highpass 1400 Hz)
-- RL/RR → woofer DAC `0x03` channel 2 (lowpass 1400 Hz, invert, +4 dB lowshelf 180 Hz)
+- FL/FR → tweeter DAC `0x02` channel 0 (LR4 highpass 1000 Hz)
+- RL/RR → woofer DAC `0x03` channel 2 (LR4 lowpass 1000 Hz, +8 dB lowshelf 100 Hz, no invert)
 
 WirePlumber keeps the raw 4ch node at `priority.session=1` so Spotify/Chromium never pick it. Default sink is `cs8409_speakers`.
 
