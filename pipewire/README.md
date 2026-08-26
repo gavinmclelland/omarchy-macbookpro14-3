@@ -1,32 +1,37 @@
 # CS8409 on MacBookPro14,3
 
-Speakers work. They do not sound like macOS. Mic is quiet (same as macOS).
+Speakers work. Mic is quiet (same as macOS).
 
-## Current (safe) setup
+## Current graph
 
-- Profile: `output:analog-stereo+input:analog-stereo`
-- PipeWire clock 44100 (`pipewire/pipewire-cs8409.conf`)
-- Volume: PipeWire / Touch Bar only (~40% last set). ACP uses ALSA `PCM` as that fader — do not fight it with `amixer set PCM 100%` while WP is at 40%.
-- User unit: `cs8409-mixer.service` → mic unmute + boost. **Do not** force surround-40 from this unit.
+Apps see a **stereo** sink `cs8409_speakers`. Playback is 4ch onto analog-surround-40:
 
-## Why it sounds hollow
+- FL/FR → tweeter DAC `0x02` channel 0 (highpass 1400 Hz)
+- RL/RR → woofer DAC `0x03` channel 2 (lowpass 1400 Hz, invert, +4 dB lowshelf 180 Hz)
 
-Four speakers (tweeter L/R, woofer L/R). Codec does no crossover. Stereo 2ch is cloned onto both DACs (`0x02` ch0 tweeters, `0x03` should be woofers). Full-range on both = midrange cancellation.
+WirePlumber keeps the raw 4ch node at `priority.session=1` so Spotify/Chromium never pick it. Default sink is `cs8409_speakers`.
 
-Apple does the split in CoreAudio. davidjo documents this; Linux needs a 4ch graph + HP/LP (and real Apple biquads from `AppleHDA` layouts if we can mount the macOS System volume).
+- Clock 44100 (`pipewire-cs8409.conf`)
+- Volume: PipeWire / Touch Bar only. ACP uses ALSA `PCM` as that fader.
+- Mixer unit: mic unmute + boost. Do not force surround-40 from that unit.
 
-## 4ch crossover (parked — broke Spotify)
+Confirmed while playing: PCM `S32_LE` 4ch 44100; `0x02` stream ch0, `0x03` stream ch2. Pulse `paplay` (2ch) links to `cs8409_speakers`, not the raw 4ch node.
 
-Files:
+## Why stereo-only sounded hollow
 
-- `pipewire/60-cs8409-crossover.conf` — filter-chain `cs8409_speakers` (HP/LP ~1400 Hz, woofer invert, +4 dB lowshelf 180 Hz)
-- `pipewire/51-cs8409-surround40.conf` — WirePlumber profile `analog-surround-40+input:analog-stereo`
+Codec does no crossover. 2ch clones full-range onto both DACs. Tweeters and woofers fight in the midrange. Apple splits in CoreAudio.
 
-On the machine they live under `~/.config/pipewire/disabled/` and `~/.config/wireplumber/disabled/`.
+## Files
 
-When enabled: 4ch PCM confirmed (`0x02` stream ch0, `0x03` stream ch2), sound fuller, then **Spotify “can’t play current song”** (PipeWire links failed; Spotify not a PW client until stereo was restored and Spotify restarted).
+- `60-cs8409-crossover.conf` — stereo filter-chain sink
+- `51-cs8409.conf` — surround-40 profile + hide raw 4ch from session default
+- `51-cs8409-surround40.conf` — old “force 4ch as default”; do not enable
 
-Next attempt must keep a normal stereo sink that Chromium/Spotify can use, and feed 4ch only on the playback side.
+Rollback: move the two files out of `~/.config/*/conf.d/`, `systemctl --user restart pipewire wireplumber`, `pactl set-card-profile alsa_card.pci-0000_00_1f.3 output:analog-stereo+input:analog-stereo`.
+
+Headphones: card is forced to surround-40; jack autoswitch is unverified.
+
+AppleHDA biquads from macOS are not in this graph yet ([#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14)).
 
 ## Mic
 

@@ -49,9 +49,9 @@ davidjo CS8409 DKMS. Analog Stereo Duplex. Internal mic unmuted, boost 20 dB. Mi
 2. CS8409 is happiest at **44.1 kHz S32_LE**. PipeWire default 48 kHz was resampling. Drop-in: `pipewire/pipewire-cs8409.conf` → `~/.config/pipewire/pipewire.conf.d/99-cs8409.conf`.
 3. Four speakers: left/right **tweeter** + left/right **woofer**. Driver node chain `0x02→0x24` (first two channels, tweeters), `0x03→0x25` (next two, woofers). Stereo 2ch **duplicates** full-range onto both DACs. That sounds **hollow** (tweeters and woofers fight in the midrange). Apple does the split in CoreAudio, not in the codec.
 4. **Crossover experiment (reverted as default):** switched card to `analog-surround-40`, PipeWire filter `cs8409_speakers` (HP tweeters / LP woofers at 1.4–1.6 kHz, later woofer invert + 4 dB lowshelf at 180 Hz). Confirmed 4ch PCM: `0x02` stream ch0, `0x03` stream ch2. Sounded fuller but still no “depth”. **Spotify then failed** (`can't play current song`): WirePlumber `SiStandardLink` 2/2 links failed; Spotify never attached to PipeWire after the graph restart.
-5. **Current default:** analog-stereo, sink ~40%, crossover configs **parked** in `~/.config/pipewire/disabled/` and `~/.config/wireplumber/disabled/`. Filter files remain in `pipewire/60-cs8409-crossover.conf` for a later Spotify-safe graph.
+5. **Spotify-safe 4ch (2026-08-26, live):** default sink is stereo filter `cs8409_speakers`. Hardware profile `analog-surround-40`. Raw 4ch node `priority.session=1` so apps never pick it. While playing: PCM 4ch S32_LE 44100; DAC `0x02` stream ch0 (tweeters), `0x03` stream ch2 (woofers). Pulse `paplay` 2ch links to the filter, not the 4ch ALSA node. First 4ch attempt failed because surround-40 **was** the default sink.
 
-Linux will not match Apple’s DSP without a working 4ch filter that apps can play into.
+Linux still lacks Apple’s CoreAudio biquads; this is a 2nd-order 1400 Hz split + woofer invert/shelf, not a macOS clone. User-confirm it sounds right ([#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14)).
 
 User service: `~/.config/systemd/user/macbook-internal-mic.service` (PCM 100% when it is the hardware max, internal mic unmute). Do **not** force surround-40 from that unit.
 
@@ -147,7 +147,7 @@ nvme0n1p4  231G  LUKS/btrfs        Omarchy
 | Guessed `BCM.hcd` | Do not. Can take UART BT offline. |
 | Touch Bar modules at sysinit | Deadlock / hang `sysinit.target`; forced power-off. Late `insmod` only. |
 | iBridge USB config 2 (display mode) | `usb_set_configuration` self-deadlock. Stay `tb_mode_param=keyboard`. |
-| 4ch PipeWire crossover as **default sink** | Fuller sound, then **Spotify cannot play**. Parked. |
+| 4ch ALSA node as **app default sink** | Fuller sound, then **Spotify cannot play**. Fixed: stereo filter is the default; 4ch is playback-only. |
 | Spotify CEF `string_view::substr` abort | SIGTRAP ~30 s after a PipeWire bounce. One dump; relaunch clean. [#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15). |
 | Extract Linux `.hcd` from Apple MiniDriver `.hex` | Wrong image (ARM MiniDriver, not HCI PatchRAM). |
 
@@ -161,7 +161,7 @@ nvme0n1p4  231G  LUKS/btrfs        Omarchy
 | [#10](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/10) Wi-Fi Apple MAC | **Reboot** (NVRAM already written) |
 | [#11](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/11) Option EFI Boot | **Reboot**, hold Option |
 | [#12](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/12) suspend/resume | One `systemctl suspend` / lid: TB, ALS, USB-C, Wi-Fi, T1 still `8600` |
-| [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) speaker quality | Spotify-safe 4ch crossover / Apple layout EQ |
+| [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) speaker quality | Graph is live (stereo sink → 4ch). Confirm it sounds right; AppleHDA EQ later |
 | [#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15) Spotify CEF abort | Repro or close as one-off `substr` trap |
 
 ## Open better (parked)

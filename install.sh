@@ -92,13 +92,18 @@ install_pipewire() {
 		"$USER_HOME/.config/systemd/user/macbook-internal-mic.service"
 	install -Dm644 "$ROOT/pipewire/pipewire-cs8409.conf" \
 		"$USER_HOME/.config/pipewire/pipewire.conf.d/99-cs8409.conf"
+	install -Dm644 "$ROOT/pipewire/60-cs8409-crossover.conf" \
+		"$USER_HOME/.config/pipewire/pipewire.conf.d/60-cs8409-crossover.conf"
+	install -d "$USER_HOME/.config/wireplumber/wireplumber.conf.d"
+	install -Dm644 "$ROOT/pipewire/51-cs8409.conf" \
+		"$USER_HOME/.config/wireplumber/wireplumber.conf.d/51-cs8409.conf"
 	chown -R "$USER_NAME:$USER_NAME" \
 		"$USER_HOME/.config/systemd/user/macbook-internal-mic.service" \
-		"$USER_HOME/.config/pipewire/pipewire.conf.d/99-cs8409.conf"
-	# Parked 4ch files stay in the repo only; do not enable as the default sink.
-	echo "    Enable user units as $USER_NAME:"
-	echo "      systemctl --user enable --now macbook-internal-mic.service"
-	echo "      systemctl --user restart pipewire wireplumber"
+		"$USER_HOME/.config/pipewire" \
+		"$USER_HOME/.config/wireplumber/wireplumber.conf.d/51-cs8409.conf"
+	echo "    Then as $USER_NAME: systemctl --user enable --now macbook-internal-mic.service"
+	echo "    systemctl --user restart pipewire wireplumber"
+	echo "    wpctl set-default the sink named cs8409_speakers"
 }
 
 case "$step" in
