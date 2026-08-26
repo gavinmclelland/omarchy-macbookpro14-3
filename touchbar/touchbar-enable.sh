@@ -81,8 +81,9 @@ if ! grep -q '^apple_ibridge ' /proc/modules; then
 fi
 
 # fnmode/idle/dim are settable at load time even though their sysfs entries are 0444.
+# Match Omarchy idle: dim ~screensaver (150s), off ~lock (300s). -1 never dims.
 if ! grep -q '^apple_ib_tb ' /proc/modules; then
-	timeout 45 insmod "$WORK/apple-ib-tb.ko" fnmode=0 idle_timeout=-1 dim_timeout=-1 || { log "apple_ib_tb failed to load"; exit 1; }
+	timeout 45 insmod "$WORK/apple-ib-tb.ko" fnmode=0 idle_timeout=300 dim_timeout=150 || { log "apple_ib_tb failed to load"; exit 1; }
 	log "apple_ib_tb loaded"
 fi
 
@@ -106,21 +107,33 @@ if ! tb_attr_dir >/dev/null; then
 	log "no writable controls yet — reloading apple_ib_tb to re-probe"
 	timeout 30 rmmod apple_ib_tb 2>/dev/null || log "rmmod apple_ib_tb failed (continuing)"
 	sleep 1
-	timeout 45 insmod "$WORK/apple-ib-tb.ko" fnmode=0 idle_timeout=-1 dim_timeout=-1 || log "reload failed"
+	timeout 45 insmod "$WORK/apple-ib-tb.ko" fnmode=0 idle_timeout=300 dim_timeout=150 || log "reload failed"
 	sleep 2
 fi
 
 # ── 5. settings, and report ──────────────────────────────────────────────────────────────
 if d=$(tb_attr_dir); then
-	printf '%s' '0'  > "$d/fnmode"       2>/dev/null || true
-	printf '%s' '-1' > "$d/idle_timeout" 2>/dev/null || true
-	printf '%s' '-1' > "$d/dim_timeout"  2>/dev/null || true
+	printf '%s' '0'   > "$d/fnmode"       2>/dev/null || true
+	printf '%s' '300' > "$d/idle_timeout" 2>/dev/null || true
+	printf '%s' '150' > "$d/dim_timeout"  2>/dev/null || true
 	log "SUCCESS: fnmode=$(cat "$d/fnmode") idle=$(cat "$d/idle_timeout") dim=$(cat "$d/dim_timeout")"
 else
 	log "FAILED: appletb_probe still did not complete; the strip will be dark"
 fi
 
+# ALS is optional. Load after the TB bind so hid-sensor-hub is already off .0002.
+# insmod does not pull deps; apple_ib_als needs industrialio_triggered_buffer.
+if ! grep -q '^apple_ib_als ' /proc/modules; then
+	modprobe industrialio_triggered_buffer 2>/dev/null || log "could not load industrialio_triggered_buffer"
+	if timeout 45 insmod "$WORK/apple-ib-als.ko"; then
+		log "apple_ib_als loaded"
+	else
+		log "apple_ib_als failed (non-fatal)"
+	fi
+fi
+
 for d in /sys/bus/hid/devices/*05AC*8600*; do
 	log "  $(basename "$d") -> $(basename "$(readlink -f "$d/driver" 2>/dev/null)" 2>/dev/null || echo NONE)"
 done
+ls -d /sys/bus/iio/devices/iio:device* 2>/dev/null | while read -r n; do log "  IIO $n"; done
 awk '/^N: Name=.*Touch Bar/{n=$0} /^H: Handlers=/{if (n) {print "  " n " " $0; n=""}}' /proc/bus/input/devices | while read -r l; do log "$l"; done

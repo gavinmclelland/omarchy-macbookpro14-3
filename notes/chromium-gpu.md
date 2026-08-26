@@ -13,5 +13,7 @@ Dual GPU: Intel HD 630 `i915` `renderD129` + AMD Polaris11 `amdgpu` `renderD128`
 ANGLE was on AMD (`radeonsi polaris11 ACO`, Mesa 26.2.1). GPU child unusable;
 no i915/amdgpu hang in dmesg. Not an Omarchy bug.
 
-Workaround: `--disable-gpu` in `~/.config/chromium-flags.conf`.
-Not applied yet.
+Workaround applied 2026-08-25: `--disable-gpu` in `~/.config/chromium-flags.conf`
+(after two SIGTRAPs during `gh auth login --web`). New Chromium windows pick it up.
+
+Two dumps: PID 26211 22:59:43, PID 35128 23:04:49. Same `LOG(FATAL)`.

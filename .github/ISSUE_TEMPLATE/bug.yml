@@ -1,0 +1,25 @@
+name: Bug
+description: Something that should work on this T1 does not
+labels: ["type:bug", "phase:work"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [touchbar, gpu, als, bluetooth, input, wifi, audio, boot]
+    validations:
+      required: true
+  - type: textarea
+    id: probe
+    attributes:
+      label: First probe
+      description: Commands already run and what they showed
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+      description: Observable pass condition
+    validations:
+      required: true

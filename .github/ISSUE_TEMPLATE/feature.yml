@@ -1,0 +1,23 @@
+name: Feature
+description: Make it better — after daily-driver basics work
+labels: ["type:feature", "phase:better"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [touchbar, gpu, als, bluetooth, input, wifi, audio, boot]
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+    validations:
+      required: true

@@ -1,24 +1,29 @@
 # Omarchy on MacBookPro14,3 (T1)
 
-Working tree of the fixes that actually landed on this 15-inch 2017 Touch Bar
-Mac (Omarchy 4.0.1, kernel 7.1.9). T1 must stay `05ac:8600`, never recovery
-`1281`. Do not install T2 packages (`tiny-dfr`, `linux-t2`).
+Full daily-driver support for this 15-inch 2017 Touch Bar Mac. **Make it work,
+then make it better.** Issues are the source of truth.
+
+T1 must stay `05ac:8600`, never recovery `1281`. Do not install T2 packages
+(`tiny-dfr`, `linux-t2`).
 
 ## Status
 
-| | State | Fix |
+| | State | Where |
 | --- | --- | --- |
-| Wi-Fi 5 GHz | works | `wifi/` NVRAM in `/usr/lib/firmware/updates/brcm/` |
-| Speakers + mic | works | `audio/` davidjo CS8409 DKMS (mic ships muted) |
-| Esc without Touch Bar | works | `esc/` keyd: Fn as **layer**, `` ` `` → Esc |
-| Touch Bar Esc + F1–F12 | works | `touchbar/` DKMS + late `insmod`, steal HID `.0002` |
+| Wi-Fi 5 GHz | works | `wifi/` |
+| Speakers + mic | works | `audio/` |
+| Esc without Touch Bar | works | `esc/` |
+| Touch Bar Esc + F1–F12 | works | `touchbar/` |
 | USB-C after suspend | works | `boot/` `pcie_ports=compat` |
-| NVMe suspend | works | Omarchy stock `d3cold_allowed=0` |
-| Radeon Pro 560 panel | works | `amdgpu` on `eDP-1`; Intel runtime-suspended |
-| Bluetooth | ROM only | do **not** drop a guessed `BCM.hcd` |
-| ALS / TB dim with screen | not done | `idle_timeout=-1`; `apple_ib_als` not loaded |
-| Siri / custom TB UI | can't | T1 driver has canned layouts only |
-| Chromium GPU abort | open | `notes/chromium-gpu.md` |
+| NVMe suspend | works | `d3cold_allowed=0` on `0000:02:00.0` |
+| Radeon Pro 560 panel | works | `amdgpu` `eDP-1` |
+| TB dim with screen idle | [#1](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/1) | `phase:work` |
+| Chromium GPU abort | [#2](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/2) | `phase:work` |
+| ALS / IIO lux | [#3](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/3) | `phase:work` |
+| Bluetooth ROM vs PatchRAM | [#4](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/4) | `phase:work` |
+| Voice / default agent | [#5](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/5) | `phase:better` |
+| Custom Touch Bar UI | [#6](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/6) | `phase:better` |
+| ALS-driven TB brightness | [#7](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/7) | `phase:better` |
 
 ## Install (each needs sudo)
 
@@ -33,10 +38,13 @@ sudo ./boot/install.sh       # reboot
 Touch Bar modules are blacklisted and loaded after `multi-user.target` on
 purpose. Loading them at sysinit can hang the box with no login screen.
 
-## Still to find
+## Still open
 
-- Hook Touch Bar dim/off to screen idle (or load ALS — it will not do that
-  by itself).
-- Why Chromium's GPU process dies on Polaris11 (`renderD128`) with i915 present.
-- A real HCI PatchRAM for BCM20703A2 UART BT, if ROM is not enough.
-- Voice: F9 is already Voxtype PTT; no Siri glyph on this driver.
+Work: [#1](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/1)
+[#2](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/2)
+[#3](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/3)
+[#4](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/4).
+
+Better (parked): [#5](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/5)
+[#6](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/6)
+[#7](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/7).

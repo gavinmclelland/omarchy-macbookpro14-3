@@ -1,0 +1,24 @@
+name: Investigate
+description: We do not yet know if this is broken, missing, or fine
+labels: ["type:investigate", "phase:work"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [touchbar, gpu, als, bluetooth, input, wifi, audio, boot]
+    validations:
+      required: true
+  - type: textarea
+    id: probe
+    attributes:
+      label: First probe
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+      description: Close, fix, or promote to a bug/feature
+    validations:
+      required: true
