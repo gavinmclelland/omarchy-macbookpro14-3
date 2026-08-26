@@ -1,0 +1,6 @@
+*.pass
+*.img
+*.img.gz
+esp-*
+backups/
+*.hcd

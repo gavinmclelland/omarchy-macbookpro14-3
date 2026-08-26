@@ -1,0 +1,19 @@
+[Unit]
+Description=Enable the Apple T1 Touch Bar (iBridge)
+Documentation=https://github.com/nohzafk/omarchy-macbookpro-t1/blob/main/drivers/appleibridge/WORKING-RECIPE.md
+# Deliberately late. These modules must NOT load from /etc/modules-load.d/: if one wedges
+# there it hangs sysinit.target and only a forced power-off recovers. Ordered after
+# multi-user.target so any failure delays nothing that matters.
+After=multi-user.target
+ConditionPathExistsGlob=/sys/bus/hid/devices/0003:05AC:8600.0001
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/touchbar-enable.sh
+RemainAfterExit=yes
+TimeoutStartSec=180
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
