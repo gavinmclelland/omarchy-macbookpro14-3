@@ -69,7 +69,7 @@ DKMS `appleibridge` from the F13-Kr1pt0n lineage, **late load** only:
 
 Native path: `apple_ib_tb` watches `KEY_FN` on the SPI keyboard (`tbkbd`). That does **not** fire while keyd has `EVIOCGRAB` on `event4` — the input core then delivers events only to the grabber, so `last_fn_pressed` stays false and the strip never leaves special mode. Confirmed: `tbkbd` is attached, SPI `KEY_FN` is present, `event4` grab returns `-EBUSY`.
 
-Workaround (`esc/touchbar-fn.service`): `keyd listen` emits `+fn`/`-fn` for the keyd `fn` layer. The watcher writes `fnmode=0` (F-keys) on hold and `fnmode=1` (media) on release. Keep the layer named `fn`. keyd `Fn+\`` Esc is unchanged.
+Workaround (`esc/touchbar-fn.service`): `keyd listen` emits `+fn`/`-fn` for the keyd `fn` layer. The watcher writes `fnmode=0` (F-keys) on hold and `fnmode=1` (media) on release. Keep the layer named `fn`. keyd `Fn+\`` Esc is unchanged. **User-confirmed:** hold Fn switches the strip to F1–F12. [#16](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/16) closed.
 
 Idle: `idle_timeout=300` `dim_timeout=150` (lock / screensaver). Not user-confirmed yet. [#1](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/1).
 
@@ -77,7 +77,7 @@ Custom pixels / Siri orb: needs iBridge **USB config 2** + DRM (`xeeban` `applet
 
 ### Escape without the strip (`esc/`)
 
-keyd: `fn = layer(fn)`, `[fn] grave = esc`. Chord `fn+grave` (50 ms) still types backtick. That grab is also why Fn did not switch the Touch Bar until `touchbar-fn.service` ([#16](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/16)).
+keyd: `fn = layer(fn)`, `[fn] grave = esc`. Chord `fn+grave` (50 ms) still types backtick. That grab is also why Fn did not switch the Touch Bar until `touchbar-fn.service` ([#16](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/16) closed).
 
 ### Keyboard backlight ([#8](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/8) closed)
 
@@ -143,7 +143,7 @@ nvme0n1p4  231G  LUKS/btrfs        Omarchy
 | Experiment | Result |
 | --- | --- |
 | `fnmode=0` (Esc+F-keys always) | No brightness/volume/kbd on the strip. Switched to `fnmode=1`. |
-| `apple_ib_tb` KEY_FN while keyd grabs SPI | `tbkbd` attached but starved. `keyd listen` → `fnmode` 0/1. |
+| `apple_ib_tb` KEY_FN while keyd grabs SPI | `tbkbd` attached but starved. Fixed: `keyd listen` → `fnmode` 0/1. User-confirmed. |
 | Guessed `BCM.hcd` | Do not. Can take UART BT offline. |
 | Touch Bar modules at sysinit | Deadlock / hang `sysinit.target`; forced power-off. Late `insmod` only. |
 | iBridge USB config 2 (display mode) | `usb_set_configuration` self-deadlock. Stay `tb_mode_param=keyboard`. |
@@ -163,7 +163,6 @@ nvme0n1p4  231G  LUKS/btrfs        Omarchy
 | [#12](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/12) suspend/resume | One `systemctl suspend` / lid: TB, ALS, USB-C, Wi-Fi, T1 still `8600` |
 | [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) speaker quality | Spotify-safe 4ch crossover / Apple layout EQ |
 | [#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15) Spotify CEF abort | Repro or close as one-off `substr` trap |
-| [#16](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/16) Fn does not switch TB | Confirm hold keyboard Fn → F1–F12 after `touchbar-fn.service` |
 
 ## Open better (parked)
 

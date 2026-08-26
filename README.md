@@ -24,7 +24,7 @@ T1 must stay `05ac:8600`, never recovery `1281`. Do not install T2 packages
 | ALS / IIO lux | works | [#3](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/3) closed |
 | Bluetooth discovery | works | [#4](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/4) closed |
 | Keyboard backlight | works | [#8](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/8) closed |
-| TB media keys vs F-keys | fnmode=1; hold **keyboard Fn** for F1–F12 (keyd-listen watcher, [#16](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/16)) | `esc/` + `touchbar/` |
+| TB media keys vs F-keys | works (hold **keyboard Fn** for F1–F12) | [#16](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/16) closed |
 | Wi-Fi Apple MAC | [#10](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/10) | `phase:work` |
 | Option-key EFI Boot | [#11](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/11) | `phase:work` |
 | Suspend/resume | [#12](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/12) | `phase:work` |
@@ -65,8 +65,7 @@ Work: [#1](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/1)
 [#11](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/11)
 [#12](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/12)
 [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14)
-[#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15)
-[#16](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/16).
+[#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15).
 
 Detailed log: [`notes/NOTES.md`](notes/NOTES.md). Audio experiments: [`audio/README.md`](audio/README.md).
 
