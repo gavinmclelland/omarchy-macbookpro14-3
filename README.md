@@ -21,12 +21,12 @@ T1 must stay `05ac:8600`, never recovery `1281`. Do not install T2 packages
 | Chromium GPU abort | [#2](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/2) | `phase:work` |
 | ALS / IIO lux | works | [#3](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/3) closed |
 | Bluetooth discovery | works | [#4](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/4) closed |
-| Keyboard backlight | [#8](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/8) | `phase:work` |
-| TB media keys vs F-keys | [#9](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/9) | `phase:work` |
+| Keyboard backlight | works | [#8](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/8) closed |
+| TB media keys vs F-keys | fnmode=1 | [#9](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/9) closed |
 | Wi-Fi Apple MAC | [#10](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/10) | `phase:work` |
 | Option-key EFI Boot | [#11](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/11) | `phase:work` |
 | Suspend/resume | [#12](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/12) | `phase:work` |
-| NVMe suspend unit quoting | [#13](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/13) | `phase:work` |
+| NVMe suspend unit quoting | works | [#13](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/13) closed |
 | Voice / default agent | [#5](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/5) | `phase:better` |
 | Custom Touch Bar UI | [#6](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/6) | `phase:better` |
 | ALS-driven TB brightness | [#7](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/7) | `phase:better` |
@@ -48,8 +48,9 @@ purpose. Loading them at sysinit can hang the box with no login screen.
 
 Work: [#1](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/1)
 [#2](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/2)
-[#3](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/3)
-[#4](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/4).
+[#10](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/10)
+[#11](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/11)
+[#12](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/12).
 
 Better (parked): [#5](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/5)
 [#6](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/6)
