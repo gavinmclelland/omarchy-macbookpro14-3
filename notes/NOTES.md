@@ -95,6 +95,22 @@ iBridge UVC `/dev/video0`, MJPEG 1280×720. First ffmpeg frame is black (AGC); a
 
 Chromium 151 `LOG(FATAL)` `GPU process isn't usable` on Polaris11 `renderD128` (two SIGTRAPs during `gh auth login --web`). Not OOM, not Omarchy. Workaround: `--disable-gpu` in `~/.config/chromium-flags.conf`. Later process list showed `--use-gl=disabled`. Details: `notes/chromium-gpu.md`.
 
+### Spotify CEF abort ([#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15))
+
+`spotify 1:1.2.96.518-1` PID 67730, SIGTRAP 2026-08-26 00:39:02 PDT. Not OOM. Not Omarchy. **Not** [#2](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/2).
+
+CEF `libcef.so` **main/UI thread** `ImmediateCrash` (`int3; ud2`) after:
+
+```
+out_of_range was thrown in -fno-exceptions mode with message "string_view::substr"
+```
+
+`string_view::substr(pos)` with `pos > size()`. PipeWire thread was in `epoll_wait`. Timeline: `systemctl --user daemon-reload` bounced PipeWire at 00:38:32; abort 30 s later. Correlation, not a proven cause. Relaunch did not dump. `--disable-gpu` is **not** the fix unless a later dump shows the GPU path.
+
+Distinct from [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) “can’t play current song” (Spotify never attached after 4ch sink). This is a later process abort.
+
+Sanitized: [`notes/spotify-crash.md`](spotify-crash.md).
+
 ### NVMe suspend ([#13](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/13) closed)
 
 Omarchy unit had `0000\:02\:00.0`; systemd logged `Ignoring unknown escape sequences`. Replaced with unescaped path in `boot/nvme-d3cold.service`. `d3cold_allowed` is 0.
@@ -127,6 +143,7 @@ nvme0n1p4  231G  LUKS/btrfs        Omarchy
 | Touch Bar modules at sysinit | Deadlock / hang `sysinit.target`; forced power-off. Late `insmod` only. |
 | iBridge USB config 2 (display mode) | `usb_set_configuration` self-deadlock. Stay `tb_mode_param=keyboard`. |
 | 4ch PipeWire crossover as **default sink** | Fuller sound, then **Spotify cannot play**. Parked. |
+| Spotify CEF `string_view::substr` abort | SIGTRAP ~30 s after a PipeWire bounce. One dump; relaunch clean. [#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15). |
 | Extract Linux `.hcd` from Apple MiniDriver `.hex` | Wrong image (ARM MiniDriver, not HCI PatchRAM). |
 
 ---
@@ -140,6 +157,7 @@ nvme0n1p4  231G  LUKS/btrfs        Omarchy
 | [#11](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/11) Option EFI Boot | **Reboot**, hold Option |
 | [#12](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/12) suspend/resume | One `systemctl suspend` / lid: TB, ALS, USB-C, Wi-Fi, T1 still `8600` |
 | [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) speaker quality | Spotify-safe 4ch crossover / Apple layout EQ |
+| [#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15) Spotify CEF abort | Repro or close as one-off `substr` trap |
 
 ## Open better (parked)
 
@@ -155,3 +173,4 @@ nvme0n1p4  231G  LUKS/btrfs        Omarchy
 - Bluetooth: no invented `.hcd`.
 - Audio: do not set a 4ch virtual sink as default until Spotify/Chromium attach to it.
 - Chromium on this dual GPU: `--disable-gpu` if it `SIGTRAP`s.
+- Spotify CEF abort (`string_view::substr`) is **not** the Chromium GPU fatal; do not apply `--disable-gpu` as the fix unless a later dump shows that path.

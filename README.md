@@ -11,7 +11,8 @@ T1 must stay `05ac:8600`, never recovery `1281`. Do not install T2 packages
 | | State | Where |
 | --- | --- | --- |
 | Wi-Fi 5 GHz | works | `wifi/` |
-| Speakers + mic | works, quality [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) | `audio/` — 4ch crossover **parked** (broke Spotify) |
+| Speakers + mic | works, quality [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) | `audio/` — 4ch crossover **parked** (broke Spotify attach) |
+| Spotify CEF abort | [#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15) | `string_view::substr` SIGTRAP — not [#2](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/2) |
 | FaceTime webcam | works | iBridge UVC `/dev/video0` 1280×720 |
 | Esc without Touch Bar | works | `esc/` |
 | Touch Bar Esc + F1–F12 | works | `touchbar/` |
@@ -61,7 +62,8 @@ Work: [#1](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/1)
 [#10](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/10)
 [#11](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/11)
 [#12](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/12)
-[#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14).
+[#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14)
+[#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15).
 
 Detailed log: [`notes/NOTES.md`](notes/NOTES.md). Audio experiments: [`audio/README.md`](audio/README.md).
 
