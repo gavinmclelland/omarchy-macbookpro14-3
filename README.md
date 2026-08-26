@@ -18,7 +18,7 @@ T1 must stay `05ac:8600`, never recovery `1281`. Do not install T2 packages
 | NVMe suspend | works | `d3cold_allowed=0` on `0000:02:00.0` |
 | Radeon Pro 560 panel | works | `amdgpu` `eDP-1` |
 | TB dim with screen idle | [#1](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/1) | `phase:work` |
-| Chromium GPU abort | [#2](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/2) | `phase:work` |
+| Chromium GPU abort | mitigated \`--disable-gpu\` | [#2](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/2) closed |
 | ALS / IIO lux | works | [#3](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/3) closed |
 | Bluetooth discovery | works | [#4](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/4) closed |
 | Keyboard backlight | works | [#8](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/8) closed |
@@ -57,7 +57,6 @@ for the strip: `apple_ib_tb` watches `KEY_FN` on the SPI keyboard (`tbkbd`).
 ## Still open
 
 Work: [#1](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/1)
-[#2](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/2)
 [#10](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/10)
 [#11](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/11)
 [#12](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/12).
