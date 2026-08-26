@@ -60,7 +60,10 @@ for the strip: `apple_ib_tb` watches `KEY_FN` on the SPI keyboard (`tbkbd`).
 Work: [#1](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/1)
 [#10](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/10)
 [#11](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/11)
-[#12](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/12).
+[#12](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/12)
+[#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14).
+
+Detailed log: [`notes/NOTES.md`](notes/NOTES.md). Audio experiments: [`audio/README.md`](audio/README.md).
 
 Better (parked): [#5](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/5)
 [#6](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/6)
