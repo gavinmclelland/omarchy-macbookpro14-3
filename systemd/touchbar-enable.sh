@@ -114,7 +114,7 @@ fi
 # ── 5. settings, and report ──────────────────────────────────────────────────────────────
 if d=$(tb_attr_dir); then
 	# 1 = media keys; F-keys while Fn held. Esc stays. Matches Omarchy XF86 binds.
-	# keyd grabs the SPI keyboard, so apple_ib_tb does not see KEY_FN. esc/touchbar-fn.service
+	# keyd grabs the SPI keyboard, so apple_ib_tb does not see KEY_FN. systemd/touchbar-fn.service
 	# writes 0/1 here as the keyd fn layer goes up/down.
 	printf '%s' '1'   > "$d/fnmode"       2>/dev/null || true
 	printf '%s' '300' > "$d/idle_timeout" 2>/dev/null || true

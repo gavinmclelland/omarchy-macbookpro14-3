@@ -1,6 +1,6 @@
 [Unit]
 Description=Enable the Apple T1 Touch Bar (iBridge)
-Documentation=https://github.com/nohzafk/omarchy-macbookpro-t1/blob/main/drivers/appleibridge/WORKING-RECIPE.md
+Documentation=https://github.com/gavinmclelland/omarchy-macbookpro14-3
 # Deliberately late. These modules must NOT load from /etc/modules-load.d/: if one wedges
 # there it hangs sysinit.target and only a forced power-off recovers. Ordered after
 # multi-user.target so any failure delays nothing that matters.

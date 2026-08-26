@@ -3,7 +3,7 @@
 Machine: **MacBookPro14,3** (15-inch 2017 Touch Bar), hostname `omabook-pro`.  
 OS: Omarchy 4.0.1, kernel **7.1.9-arch1-2**.  
 T1: **`05ac:8600` iBridge** (must not be recovery `05ac:1281`).  
-Repo: this tree. Issues are the tracker. Do not install T2 packages (`tiny-dfr`, `linux-t2`).
+Repo: this tree is a **platform overlay** (`drivers/` `firmware/` `systemd/` `keyd/` `pipewire/` `boot/`), not symptom folders. Issues are the tracker. Do not install T2 packages (`tiny-dfr`, `linux-t2`). Esc is the left Touch Bar key; `Fn+\`` in `keyd/` is backup.
 
 Written 2026-08-25–26. This is what actually landed on the laptop, including failed experiments.
 
@@ -31,7 +31,7 @@ No iBridge die temperature is exposed. Closest skin sensors (`Ts0P`/`Ts1P`) were
 
 ## What works
 
-### Wi-Fi 5 GHz (`wifi/`)
+### Wi-Fi 5 GHz (`firmware/brcm/`)
 
 NVRAM in **`/usr/lib/firmware/updates/brcm/`** (not `/lib/firmware/brcm/`, which pacman owns). Live link at 5200 MHz / 40 MHz.
 
@@ -39,23 +39,23 @@ NVRAM in **`/usr/lib/firmware/updates/brcm/`** (not `/lib/firmware/brcm/`, which
 
 Apple MAC from macOS `en0` (NetworkInterfaces.plist) is `8c:85:90:1d:13:36`. That is written in the **live** NVRAM file. The running iface is still `00:90:4c:0d:f4:3e` until reboot. Git copy stays `macaddr=xx:xx:xx:xx:xx:xx`. See [#10](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/10).
 
-### Audio — speakers and mic exist (`audio/`, [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14))
+### Audio — speakers and mic exist (`pipewire/`, [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14))
 
 davidjo CS8409 DKMS. Analog Stereo Duplex. Internal mic unmuted, boost 20 dB. Mic level is low **by design** (same as macOS); EasyEffects if you need loud capture.
 
 **Quality work (2026-08-26):**
 
 1. ALSA `PCM` was **25% (−38 dB)** while PipeWire showed ~23%. Those are the **same fader** (ACP uses PCM). Raising PCM without understanding that fights WirePlumber. Use **only** the PipeWire/Touch Bar volume.
-2. CS8409 is happiest at **44.1 kHz S32_LE**. PipeWire default 48 kHz was resampling. Drop-in: `audio/pipewire-cs8409.conf` → `~/.config/pipewire/pipewire.conf.d/99-cs8409.conf`.
+2. CS8409 is happiest at **44.1 kHz S32_LE**. PipeWire default 48 kHz was resampling. Drop-in: `pipewire/pipewire-cs8409.conf` → `~/.config/pipewire/pipewire.conf.d/99-cs8409.conf`.
 3. Four speakers: left/right **tweeter** + left/right **woofer**. Driver node chain `0x02→0x24` (first two channels, tweeters), `0x03→0x25` (next two, woofers). Stereo 2ch **duplicates** full-range onto both DACs. That sounds **hollow** (tweeters and woofers fight in the midrange). Apple does the split in CoreAudio, not in the codec.
 4. **Crossover experiment (reverted as default):** switched card to `analog-surround-40`, PipeWire filter `cs8409_speakers` (HP tweeters / LP woofers at 1.4–1.6 kHz, later woofer invert + 4 dB lowshelf at 180 Hz). Confirmed 4ch PCM: `0x02` stream ch0, `0x03` stream ch2. Sounded fuller but still no “depth”. **Spotify then failed** (`can't play current song`): WirePlumber `SiStandardLink` 2/2 links failed; Spotify never attached to PipeWire after the graph restart.
-5. **Current default:** analog-stereo, sink ~40%, crossover configs **parked** in `~/.config/pipewire/disabled/` and `~/.config/wireplumber/disabled/`. Filter files remain in `audio/60-cs8409-crossover.conf` for a later Spotify-safe graph.
+5. **Current default:** analog-stereo, sink ~40%, crossover configs **parked** in `~/.config/pipewire/disabled/` and `~/.config/wireplumber/disabled/`. Filter files remain in `pipewire/60-cs8409-crossover.conf` for a later Spotify-safe graph.
 
 Linux will not match Apple’s DSP without a working 4ch filter that apps can play into.
 
 User service: `~/.config/systemd/user/macbook-internal-mic.service` (PCM 100% when it is the hardware max, internal mic unmute). Do **not** force surround-40 from that unit.
 
-### Touch Bar (`touchbar/`)
+### Touch Bar (`drivers/appleibridge/` + `systemd/touchbar*`)
 
 DKMS `appleibridge` from the F13-Kr1pt0n lineage, **late load** only:
 
@@ -69,15 +69,15 @@ DKMS `appleibridge` from the F13-Kr1pt0n lineage, **late load** only:
 
 Native path: `apple_ib_tb` watches `KEY_FN` on the SPI keyboard (`tbkbd`). That does **not** fire while keyd has `EVIOCGRAB` on `event4` — the input core then delivers events only to the grabber, so `last_fn_pressed` stays false and the strip never leaves special mode. Confirmed: `tbkbd` is attached, SPI `KEY_FN` is present, `event4` grab returns `-EBUSY`.
 
-Workaround (`esc/touchbar-fn.service`): `keyd listen` emits `+fn`/`-fn` for the keyd `fn` layer. The watcher writes `fnmode=0` (F-keys) on hold and `fnmode=1` (media) on release. Keep the layer named `fn`. keyd `Fn+\`` Esc is unchanged. **User-confirmed:** hold Fn switches the strip to F1–F12. [#16](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/16) closed.
+Workaround (`systemd/touchbar-fn.service`): `keyd listen` emits `+fn`/`-fn` for the keyd `fn` layer. The watcher writes `fnmode=0` (F-keys) on hold and `fnmode=1` (media) on release. Keep the layer named `fn`. keyd `Fn+\`` Esc is unchanged. **User-confirmed:** hold Fn switches the strip to F1–F12. [#16](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/16) closed.
 
 Idle: `idle_timeout=300` `dim_timeout=150` (lock / screensaver). Not user-confirmed yet. [#1](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/1).
 
 Custom pixels / Siri orb: needs iBridge **USB config 2** + DRM (`xeeban` `appletbdrm`/`dfrd`). `tiny-dfr` is T2-only. Parked [#6](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/6).
 
-### Escape without the strip (`esc/`)
+### Esc (left Touch Bar slot; `keyd/` backup)
 
-keyd: `fn = layer(fn)`, `[fn] grave = esc`. Chord `fn+grave` (50 ms) still types backtick. That grab is also why Fn did not switch the Touch Bar until `touchbar-fn.service` ([#16](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/16) closed).
+This keyboard has no dedicated Esc. The strip always has Esc on the left. `keyd/apple-t1.conf`: `fn = layer(fn)`, `[fn] grave = esc` as backup when the strip is dim. Chord `fn+grave` (50 ms) still types backtick. That grab is why Fn needed `touchbar-fn.service` ([#16](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/16) closed).
 
 ### Keyboard backlight ([#8](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/8) closed)
 

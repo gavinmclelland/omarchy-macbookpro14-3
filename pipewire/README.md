@@ -5,7 +5,7 @@ Speakers work. They do not sound like macOS. Mic is quiet (same as macOS).
 ## Current (safe) setup
 
 - Profile: `output:analog-stereo+input:analog-stereo`
-- PipeWire clock 44100 (`pipewire-cs8409.conf`)
+- PipeWire clock 44100 (`pipewire/pipewire-cs8409.conf`)
 - Volume: PipeWire / Touch Bar only (~40% last set). ACP uses ALSA `PCM` as that fader — do not fight it with `amixer set PCM 100%` while WP is at 40%.
 - User unit: `cs8409-mixer.service` → mic unmute + boost. **Do not** force surround-40 from this unit.
 
@@ -19,8 +19,8 @@ Apple does the split in CoreAudio. davidjo documents this; Linux needs a 4ch gra
 
 Files:
 
-- `60-cs8409-crossover.conf` — filter-chain `cs8409_speakers` (HP/LP ~1400 Hz, woofer invert, +4 dB lowshelf 180 Hz)
-- `51-cs8409-surround40.conf` — WirePlumber profile `analog-surround-40+input:analog-stereo`
+- `pipewire/60-cs8409-crossover.conf` — filter-chain `cs8409_speakers` (HP/LP ~1400 Hz, woofer invert, +4 dB lowshelf 180 Hz)
+- `pipewire/51-cs8409-surround40.conf` — WirePlumber profile `analog-surround-40+input:analog-stereo`
 
 On the machine they live under `~/.config/pipewire/disabled/` and `~/.config/wireplumber/disabled/`.
 
