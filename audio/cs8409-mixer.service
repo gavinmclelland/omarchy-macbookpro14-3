@@ -1,0 +1,14 @@
+[Unit]
+Description=CS8409 mixer: PCM 0 dB, internal mic unmuted
+After=pipewire.service wireplumber.service
+Wants=pipewire.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/amixer -q -c PCH set PCM 100%
+ExecStart=/usr/bin/amixer -q -c PCH set "Internal Mic" cap unmute 100%
+ExecStart=/usr/bin/amixer -q -c PCH set "Internal Mic Boost" 100%
+ExecStart=/usr/bin/wpctl set-mute @DEFAULT_AUDIO_SOURCE@ 0
+
+[Install]
+WantedBy=default.target
