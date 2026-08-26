@@ -1,7 +1,8 @@
 [Unit]
 Description=CS8409 mixer: PCM 0 dB, internal mic unmuted
-After=pipewire.service wireplumber.service
+After=pipewire.service wireplumber.service pipewire-pulse.service
 Wants=pipewire.service
+PartOf=pipewire.service
 
 [Service]
 Type=oneshot
