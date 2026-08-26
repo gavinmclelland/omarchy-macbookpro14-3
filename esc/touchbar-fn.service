@@ -1,0 +1,19 @@
+[Unit]
+Description=Mirror keyd Fn layer onto the Apple T1 Touch Bar
+Documentation=https://github.com/gavinmclelland/omarchy-macbookpro14-3
+# keyd grabs the SPI keyboard, so apple_ib_tb never sees KEY_FN. This
+# writes fnmode 0/1 as the keyd fn layer goes up/down.
+After=keyd.service touchbar.service
+Requires=keyd.service
+Wants=touchbar.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/touchbar-fn-watch.sh
+Restart=always
+RestartSec=2
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
