@@ -11,7 +11,8 @@ T1 must stay `05ac:8600`, never recovery `1281`. Do not install T2 packages
 | | State | Where |
 | --- | --- | --- |
 | Wi-Fi 5 GHz | works | `wifi/` |
-| Speakers + mic | works | `audio/` |
+| Speakers + mic | works, quality [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) | `audio/` — 4ch crossover **parked** (broke Spotify) |
+| FaceTime webcam | works | iBridge UVC `/dev/video0` 1280×720 |
 | Esc without Touch Bar | works | `esc/` |
 | Touch Bar Esc + F1–F12 | works | `touchbar/` |
 | USB-C after suspend | works | `boot/` `pcie_ports=compat` |
