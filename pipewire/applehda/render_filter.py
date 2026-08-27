@@ -2,9 +2,9 @@
 """Render PipeWire filter-chain from layout57.json.
 
 Stereo sink cs8409_speakers → 4ch analog-surround-40.
-Implements the decoded Equalization32 / splitter path. Not Mozart,
-BuzzKill, ControlFreak, or thermal (undocumented). Hard clamp stands
-in for those limiters. Woofer invert is from the mic sweep, not Apple XML.
+Uses builtin bq_* nodes (param_eq In 2 / fan-out dropped the woofers).
+Not Mozart, BuzzKill, ControlFreak, or thermal. Clamp is the limiter.
+Woofer invert is from the mic sweep, not Apple XML.
 """
 from __future__ import annotations
 
@@ -21,8 +21,6 @@ BQ = {
     "peaking": "bq_peaking",
     "notch": "bq_notch",
 }
-
-# HP/LP gain in Apple XML is the Butterworth −3 dB point, not extra cut.
 PASS_TYPES = {"lowpass", "highpass"}
 
 
@@ -47,59 +45,122 @@ def spa_gain(b: dict) -> float:
     return float(b["gain_db"])
 
 
-def skip(b: dict) -> bool:
-    if b["type"] == "peaking" and abs(float(b["gain_db"])) < 0.05:
-        return True
-    return False
-
-
-def filters_block(items: list[dict], extra: list[dict] | None = None) -> str:
-    rows = list(extra or [])
+def rows_from(items: list[dict], extra_head=None, extra_tail=None) -> list[dict]:
+    rows = list(extra_head or [])
     for b in items:
-        if skip(b):
+        if b["type"] == "peaking" and abs(float(b["gain_db"])) < 0.05:
             continue
         rows.append(
             {
-                "type": spa_type(b),
+                "label": spa_type(b),
                 "freq": float(b["freq_hz"]),
                 "q": float(b["q"]),
                 "gain": spa_gain(b),
             }
         )
-    pad = "                                "
-    lines = []
-    for r in rows:
-        lines.append(
-            f'{pad}{{ type = "{r["type"]}" freq = {r["freq"]:.4f} '
-            f'q = {r["q"]:.4f} gain = {r["gain"]:.3f} }}'
-        )
-    return "\n".join(lines)
+    rows.extend(extra_tail or [])
+    return rows
+
+
+def bq_node(name: str, row: dict) -> str:
+    return (
+        "                    {\n"
+        f"                        name = {name}\n"
+        "                        type = builtin\n"
+        f"                        label = {row['label']}\n"
+        f'                        control = {{ "Freq" = {row["freq"]:.4f} '
+        f'"Q" = {row["q"]:.4f} "Gain" = {row["gain"]:.3f} }}\n'
+        "                    }"
+    )
+
+
+def series(prefix: str, rows: list[dict], src: str) -> tuple[list[str], list[str], str]:
+    """Chain bq nodes. Returns (nodes, links, last_port)."""
+    nodes, links = [], []
+    prev = src
+    for i, row in enumerate(rows):
+        name = f"{prefix}{i}"
+        nodes.append(bq_node(name, row))
+        links.append(f'                    {{ output = "{prev}" input = "{name}:In" }}')
+        prev = f"{name}:Out"
+    return nodes, links, prev
+
+
+def clamp(name: str) -> str:
+    return (
+        "                    {\n"
+        f"                        name = {name}\n"
+        "                        type = builtin\n"
+        "                        label = clamp\n"
+        '                        control = { "Min" = -0.98 "Max" = 0.98 }\n'
+        "                    }"
+    )
 
 
 def main() -> int:
     data = json.loads(LAYOUT.read_text())
     c = chain_by_key(data)
-    pre = (
-        bands(c["DspFunction0"])
-        + bands(c["DspFunction3"])
-        + bands(c["DspFunction5"])
+    pre = rows_from(
+        bands(c["DspFunction0"]) + bands(c["DspFunction3"]) + bands(c["DspFunction5"]),
+        extra_head=[{"label": "bq_highshelf", "freq": 0.0, "q": 1.0, "gain": -6.0}],
+        extra_tail=[{"label": "bq_highshelf", "freq": 0.0, "q": 1.0, "gain": 1.5}],
     )
-    tw = bands(c["DspFunction8"])
-    wf = bands(c["DspFunction9"])
-    pad = "                                "
-    pre_txt = filters_block(pre)
-    head_txt = (
-        f'{pad}{{ type = "bq_highshelf" freq = 0.0 q = 1.0 gain = -6.000 }}\n'
-        + pre_txt
-        + f'\n{pad}{{ type = "bq_highshelf" freq = 0.0 q = 1.0 gain = 1.500 }}'
-    )
-    tw_txt = filters_block(tw)
-    wf_txt = filters_block(wf)
+    tw = rows_from(bands(c["DspFunction8"]))
+    wf = rows_from(bands(c["DspFunction9"]))
+
+    nodes = [
+        "                    { name = copyIL type = builtin label = copy }",
+        "                    { name = copyIR type = builtin label = copy }",
+        "                    { name = splitL type = builtin label = copy }",
+        "                    { name = splitR type = builtin label = copy }",
+        "                    { name = invL type = builtin label = invert }",
+        "                    { name = invR type = builtin label = invert }",
+        clamp("clTwL"),
+        clamp("clTwR"),
+        clamp("clWfL"),
+        clamp("clWfR"),
+    ]
+    links: list[str] = []
+    n, l, preL_out = series("preL", pre, "copyIL:Out")
+    nodes.extend(n)
+    links.extend(l)
+    n, l, preR_out = series("preR", pre, "copyIR:Out")
+    nodes.extend(n)
+    links.extend(l)
+
+    links += [
+        f'                    {{ output = "{preL_out}" input = "splitL:In" }}',
+        f'                    {{ output = "{preR_out}" input = "splitR:In" }}',
+    ]
+
+    n, l, twL_out = series("twL", tw, "splitL:Out")
+    nodes.extend(n)
+    links.extend(l)
+    n, l, twR_out = series("twR", tw, "splitR:Out")
+    nodes.extend(n)
+    links.extend(l)
+    n, l, wfL_out = series("wfL", wf, "splitL:Out")
+    nodes.extend(n)
+    links.extend(l)
+    n, l, wfR_out = series("wfR", wf, "splitR:Out")
+    nodes.extend(n)
+    links.extend(l)
+
+    links += [
+        f'                    {{ output = "{twL_out}" input = "clTwL:In" }}',
+        f'                    {{ output = "{twR_out}" input = "clTwR:In" }}',
+        f'                    {{ output = "{wfL_out}" input = "invL:In" }}',
+        f'                    {{ output = "{wfR_out}" input = "invR:In" }}',
+        '                    { output = "invL:Out" input = "clWfL:In" }',
+        '                    { output = "invR:Out" input = "clWfR:In" }',
+    ]
+
+    # series() already linked copyIL→preL0; drop the duplicate we skipped.
 
     text = f"""# Generated by applehda/render_filter.py from layout57.json.
 # MacBookPro14,3: stereo sink → 4ch MAX98706. Do not edit by hand.
 #
-# Keep davidjo for amp/TDM. This is CoreAudio Equalization32 + splitter.
+# Keep davidjo for amp/TDM. Builtin bq_* (param_eq dropped RL/RR).
 # Not Mozart / BuzzKill / ControlFreak / thermal. Clamp is the limiter.
 # Woofer invert: internal-mic sweep (26 dB hole at 1 kHz without it).
 # Parked 800 Hz LR4: 60-cs8409-lr4.conf
@@ -111,76 +172,12 @@ context.modules = [
             media.name       = "MacBook speakers"
             filter.graph = {{
                 nodes = [
-                    {{
-                        name = pre
-                        type = builtin
-                        label = param_eq
-                        config = {{
-                            filters = [
-{head_txt}
-                            ]
-                        }}
-                    }}
-                    {{
-                        name = tw
-                        type = builtin
-                        label = param_eq
-                        config = {{
-                            filters = [
-{tw_txt}
-                            ]
-                        }}
-                    }}
-                    {{
-                        name = wf
-                        type = builtin
-                        label = param_eq
-                        config = {{
-                            filters = [
-{wf_txt}
-                            ]
-                        }}
-                    }}
-                    {{ name = invL type = builtin label = invert }}
-                    {{ name = invR type = builtin label = invert }}
-                    {{
-                        name = clTwL
-                        type = builtin
-                        label = clamp
-                        control = {{ "Min" = -0.98 "Max" = 0.98 }}
-                    }}
-                    {{
-                        name = clTwR
-                        type = builtin
-                        label = clamp
-                        control = {{ "Min" = -0.98 "Max" = 0.98 }}
-                    }}
-                    {{
-                        name = clWfL
-                        type = builtin
-                        label = clamp
-                        control = {{ "Min" = -0.98 "Max" = 0.98 }}
-                    }}
-                    {{
-                        name = clWfR
-                        type = builtin
-                        label = clamp
-                        control = {{ "Min" = -0.98 "Max" = 0.98 }}
-                    }}
+{chr(10).join(nodes)}
                 ]
                 links = [
-                    {{ output = "pre:Out 1" input = "tw:In 1" }}
-                    {{ output = "pre:Out 2" input = "tw:In 2" }}
-                    {{ output = "pre:Out 1" input = "wf:In 1" }}
-                    {{ output = "pre:Out 2" input = "wf:In 2" }}
-                    {{ output = "tw:Out 1" input = "clTwL:In" }}
-                    {{ output = "tw:Out 2" input = "clTwR:In" }}
-                    {{ output = "wf:Out 1" input = "invL:In" }}
-                    {{ output = "wf:Out 2" input = "invR:In" }}
-                    {{ output = "invL:Out" input = "clWfL:In" }}
-                    {{ output = "invR:Out" input = "clWfR:In" }}
+{chr(10).join(links)}
                 ]
-                inputs  = [ "pre:In 1" "pre:In 2" ]
+                inputs  = [ "copyIL:In" "copyIR:In" ]
                 outputs = [ "clTwL:Out" "clTwR:Out" "clWfL:Out" "clWfR:Out" ]
             }}
             capture.props = {{
@@ -190,6 +187,7 @@ context.modules = [
                 audio.position        = [ FL FR ]
                 audio.channels        = 2
                 audio.rate            = 44100
+                channelmix.disable    = true
                 priority.session      = 1400
                 priority.driver       = 1400
             }}
@@ -210,7 +208,7 @@ context.modules = [
 ]
 """
     OUT.write_text(text)
-    print("wrote", OUT)
+    print("wrote", OUT, "nodes", len(nodes), "links", len(links))
     return 0
 
 

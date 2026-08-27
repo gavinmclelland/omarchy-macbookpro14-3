@@ -27,7 +27,7 @@ Codec does no crossover. 2ch clones full-range onto both DACs. Tweeters and woof
 
 ## Files
 
-- `60-cs8409-crossover.conf` — live layout 57 filter (generated)
+- `60-cs8409-crossover.conf` — live layout 57 filter (generated `bq_*` nodes; `param_eq` dropped the woofer pair)
 - `60-cs8409-lr4.conf` — parked 800 Hz LR4 rollback
 - `51-cs8409.conf` — surround-40 profile + hide raw 4ch from session default
 - `applehda/layout57.json` — distilled MAX98706 chain

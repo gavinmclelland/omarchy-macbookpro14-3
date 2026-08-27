@@ -43,7 +43,8 @@ Stereo processing, then `Dsp2To4Splitter`:
 | 15 | 4ChOutput | output trim |
 
 Live graph (`../60-cs8409-crossover.conf`) maps 0/3/5/6/8/9 plus a hard
-clamp. Not 1/2/4/11–14 (undocumented). `render_filter.py` rebuilds the conf:
+clamp as chained `bq_*` nodes. `param_eq` fan-out left RL/RR silent. Not
+1/2/4/11–14 (undocumented). `render_filter.py` rebuilds the conf:
 
 ```bash
 python3 render_filter.py
