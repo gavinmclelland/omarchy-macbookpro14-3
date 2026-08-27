@@ -115,18 +115,43 @@ def clamp(name: str) -> str:
     )
 
 
+def _soften_body_notch(rows: list[dict]) -> None:
+    """Apple's 280 Hz band is −20 dB. Without DspLoudness/Mozart that is a
+    25–35 dB acoustic hole from 125–280 Hz (hollow, no body). Keep a cabinet
+    dip, restore the rest."""
+    for row in rows:
+        if abs(row["freq"] - 280.0) < 1.0 and row["gain"] < -15.0:
+            row["gain"] = -8.0
+
+
 def build_graph(invert: bool, delay: bool, use_limiter: bool) -> tuple[list[str], list[str], str, str]:
     delay_s = 5.0 / 44100.0
     data = json.loads(LAYOUT.read_text())
     c = chain_by_key(data)
     extra_head = []
+    extra_after_hpf: list[dict] = []
     if not use_limiter:
         extra_head = [{"label": "bq_highshelf", "freq": 0.0, "q": 1.0, "gain": -6.0}]
+    else:
+        # DspLoudness (300 Hz / 2 kHz in the XML) plus a body fill for the
+        # 125–250 Hz acoustic null the lid mic measured at −25 to −34 dB.
+        extra_after_hpf = [
+            {"label": "bq_lowshelf", "freq": 150.0, "q": 0.70, "gain": 4.0},
+            {"label": "bq_peaking", "freq": 180.0, "q": 1.00, "gain": 6.0},
+            {"label": "bq_highshelf", "freq": 6500.0, "q": 0.70, "gain": 2.5},
+        ]
     pre = rows_from(
-        bands(c["DspFunction0"]) + bands(c["DspFunction3"]) + bands(c["DspFunction5"]),
+        bands(c["DspFunction0"]),
         extra_head=extra_head,
+        extra_tail=extra_after_hpf,
+    )
+    rest = rows_from(
+        bands(c["DspFunction3"]) + bands(c["DspFunction5"]),
         extra_tail=[{"label": "bq_highshelf", "freq": 0.0, "q": 1.0, "gain": 1.5}],
     )
+    if use_limiter:
+        _soften_body_notch(rest)
+    pre.extend(rest)
     tw = rows_from(bands(c["DspFunction8"]))
     wf = rows_from(bands(c["DspFunction9"]))
 
@@ -298,6 +323,7 @@ def emit_host(nodes: list[str], links: list[str], invert_note: str, delay_note: 
 # Keep davidjo for amp/TDM. Builtin bq_* (param_eq dropped RL/RR).
 # Not Mozart / BuzzKill / ControlFreak / thermal.
 # LSP limiter_stereo on the 2ch bus (alr/boost off); clamp ±0.98 after split.
+# Loudness shelves + 180 Hz body fill; 280 Hz cabinet dip kept at −8 dB (was −20).
 # {invert_note} {delay_note}
 # install.sh substitutes @SPEAKER_SINK@ from sink_pattern.
 context.modules = [

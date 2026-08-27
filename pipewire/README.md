@@ -7,7 +7,7 @@ Speakers work. Mic is quiet (same as macOS).
 Apps see stereo sink **`cs8409_speakers`** (description: MacBook speakers).
 Playback is 4ch onto analog-surround-40:
 
-- Stereo: HPF 80 Hz + layout 57 PEQ + Apple +1.5 dB + LSP `limiter_stereo` (`alr=0` `boost=0`, `g_in` ≈ −5.3 dB)
+- Stereo: HPF 80 Hz + loudness (low shelf 150 Hz / high shelf 6.5 kHz) + 180 Hz body fill + layout 57 PEQ (280 Hz dip **−8 dB**, was −20) + Apple +1.5 dB + LSP `limiter_stereo`
 - FL/FR → tweeter DAC `0x02` ch0 (HP 1150 Hz + HP 650 Hz + tweeter PEQ)
 - RL/RR → woofer DAC `0x03` ch2 (LP 1180 Hz + LP 1500 Hz + woofer PEQ, invert, delay 5 samples)
 - Peak clamp ±0.98 (stand-in for ControlFreak / thermal)
@@ -16,9 +16,11 @@ Playback is 4ch onto analog-surround-40:
 Host is a **separate PipeWire client** (`pipewire -c cs8409-speaker-tuning.conf`), not a daemon drop-in and not Omarchy’s stock `omarchy_speaker_tuning` name. Switching it does not restart `pipewire-pulse` (Spotify stays connected).
 
 Tones (layout 57, lid mic vs 500 Hz): invert off −10 dB at 1 kHz; invert on −4 dB;
-invert + 5-sample woofer delay was **−0.7 dB** on the daemon graph. Host + limiter:
-1 kHz **+0.5 dB**, electrical 200-ish Hz on woofers, 1.6 kHz on tweeters. Keep invert
-+ delay. 280 Hz scoop is Apple.
+invert + 5-sample delay. Host + limiter: 1 kHz ~flat. **Body:** 125–280 Hz was
+−25 to −34 dB vs 500 Hz with Apple’s −20 dB notch and no DspLoudness; after
+loudness + 180 Hz fill + −8 dB dip that band is ~28 dB louder on the lid mic.
+80 Hz was already fine electrically (woofers). Keep invert + delay. Mozart /
+BuzzKill / thermal still not cloned.
 
 WirePlumber keeps the raw 4ch node at `priority.session=1` so Spotify/Chromium never pick it.
 

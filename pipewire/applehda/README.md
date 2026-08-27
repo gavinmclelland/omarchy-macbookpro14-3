@@ -43,12 +43,12 @@ Stereo processing, then `Dsp2To4Splitter`:
 | 15 | 4ChOutput | output trim |
 
 Live graph (`../speaker-tuning/macbookpro14-3/filter-chain.conf`) maps
-0/3/5/6/8/9/10 plus LSP `limiter_stereo` on the 2ch bus and a hard clamp as
-chained `bq_*` nodes. Hosted by `cs8409-speaker-tuning.service` (not a
-`pipewire.conf.d` drop-in). Invert **on**, woofer delay **5 samples**.
-Tones: 1 kHz vs 500 Hz **+0.5 dB** on the host (was −0.7 dB on the daemon graph).
-`param_eq` fan-out left RL/RR silent. Not
-1/2/4/11–14 (undocumented).
+0/3/5/6/8/9/10 plus a DspLoudness stand-in (low/high shelf), a 180 Hz body
+fill, 280 Hz dip **−8 dB** (XML is −20), LSP `limiter_stereo` on the 2ch bus,
+and a hard clamp. Hosted by `cs8409-speaker-tuning.service`. Invert **on**,
+woofer delay **5 samples**. 125–280 Hz lid-mic was −25 to −34 dB vs 500 Hz;
+after the fill that band is ~28 dB louder. `param_eq` fan-out left RL/RR
+silent. Not 1/4/11–14 (undocumented Mozart dual / BuzzKill / thermal).
 
 ```bash
 python3 render_filter.py
