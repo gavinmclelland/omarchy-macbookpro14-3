@@ -27,13 +27,18 @@ Codec does no crossover. 2ch clones full-range onto both DACs. Tweeters and woof
 
 - `60-cs8409-crossover.conf` — stereo filter-chain sink
 - `51-cs8409.conf` — surround-40 profile + hide raw 4ch from session default
-- `51-cs8409-surround40.conf` — old “force 4ch as default”; do not enable
+- `applehda/parse_layout.py` — inflate Apple `DspEqualization32`
+- `applehda/layout57.json` — this machine’s layout (MAX98706, GTK/Merry same chain)
 
 Rollback: move the two files out of `~/.config/*/conf.d/`, `systemctl --user restart pipewire wireplumber`, `pactl set-card-profile alsa_card.pci-0000_00_1f.3 output:analog-stereo+input:analog-stereo`.
 
 Headphones: card is forced to surround-40; jack autoswitch is unverified.
 
-AppleHDA biquads from macOS are not in this graph yet ([#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14)).
+AppleHDA **layout 57** is distilled (`applehda/layout57.json`) but **not** in
+this graph yet. Apple’s split is tweeter HP 1150+650 Hz / woofer LP 1180+1500 Hz,
+plus stereo PEQ, compressor, delay, and thermal protection. Next: map those
+biquads + a software peak limiter onto `cs8409_speakers`. Do not use
+`speakersafetyd`. [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14).
 
 ## Mic
 

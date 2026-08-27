@@ -26,7 +26,7 @@ DMI product. Esc is the left Touch Bar key, not a separate device.
 | | State | Where |
 | --- | --- | --- |
 | Wi-Fi 5 GHz | works | `firmware/brcm/` |
-| Speakers + mic | works; not macOS quality | `pipewire/` [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) — next: AppleHDA PEQ + limiter |
+| Speakers + mic | works; not macOS quality | `pipewire/` [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) — layout **57** distilled; PEQ+limiter not in the live graph yet |
 | Spotify CEF abort | [#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15) | `string_view::substr` SIGTRAP — app, not CS8409 |
 | FaceTime webcam | works | iBridge UVC `/dev/video0` 1280×720 |
 | Touch Bar Esc + media + F1–F12 | works | `drivers/` + `keyd/` + `systemd/touchbar*` |
@@ -67,10 +67,13 @@ Apps see stereo sink `cs8409_speakers`. Hardware is 4ch `analog-surround-40`
 (internal-mic sweep: 26 dB hole at 1 kHz without invert). Woofer shelf +2 dB.
 Raw 4ch node is hidden (`priority.session=1`) so Spotify can attach.
 
-This is **not** Apple’s CoreAudio curve. Layout XMLs live on the macOS
-**System** APFS volume (`AppleHDA.kext` `DspEqualization32`). Parser:
-`pipewire/applehda/parse_layout.py`. Do not use `speakersafetyd` (MAX98706, no
-V/ISENSE). Details: [`pipewire/README.md`](pipewire/README.md).
+This is **not** Apple’s CoreAudio curve. Distilled from this machine’s
+AppleHDA **layout 57** (MAX98706, GTK/Merry share one chain):
+`pipewire/applehda/layout57.json`. Apple splits after a stereo PEQ with tweeter
+HP 1150+650 Hz and woofer LP 1180+1500 Hz. Parser:
+`pipewire/applehda/parse_layout.py`. Do not commit `AppleHDA.kext`. Do not use
+`speakersafetyd` (MAX98706, no V/ISENSE). Details:
+[`pipewire/README.md`](pipewire/README.md).
 
 ## Touch Bar
 

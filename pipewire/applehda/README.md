@@ -1,17 +1,49 @@
 # AppleHDA layouts (Intel CS8409)
 
-Source: macOS `AppleHDA.kext/Contents/Resources/layoutN.xml.zlib` on this
-machine’s APFS System volume. **Do not commit the kext.**
+Source: this machine’s macOS `AppleHDA.kext/Contents/Resources/layoutN.xml.zlib`
+on the **System** APFS volume (not the Data volume). **Do not commit the kext
+or the zlib files.**
 
-`parse_layout.py` inflates those files and dumps `DspEqualization32` biquads
-(taprobane99’s mapping from [davidjo#179](https://github.com/davidjo/snd_hda_macbookpro/issues/179)).
+## MacBookPro14,3 is layout 57
+
+| | |
+| --- | --- |
+| Codec | CS8409 + CS42L83 (`0x10138409` / subsystem `0x106b3900`) |
+| Amps | four **MAX98706** (tweeter/woofer × L/R), TDM device `34566` |
+| Vendors | GTK `0x90000`, Merry `0xC0000` — **same** SoftwareDSP chain (both IDs → 0) |
+| PathMapID | 37 |
+
+Layouts **14/15** are TAS5764L. Layout **54** is SSM3515. Do not use those
+biquads on this laptop.
 
 ```bash
-python3 parse_layout.py raw -o parsed.json
+python3 parse_layout.py raw --layout 57 -o layout57.json
 ```
 
-Filter types: 0 low-pass, 1 high-pass, 4 bell, 6 notch.
-Roles: WooferSym/Asym, TweeterSym/Asym, Global_PreEQ.
+Coefficients: [`layout57.json`](layout57.json).
 
-A software peak limiter (not `speakersafetyd`) belongs on this graph: 14,3
-amps are MAX98706, no V/ISENSE.
+Stereo processing, then `Dsp2To4Splitter`:
+
+| # | Apple DSP | What it is |
+| --- | --- | --- |
+| 0 | Equalization32 | protection highpass 80 Hz Q=0.707 |
+| 1 | MozartCompressor | dynamics |
+| 2 | Loudness | contour |
+| 3 | Equalization32 | narrow 2.5 kHz notch |
+| 4 | MozartCompressorDualBand | split ~400 / 1250 Hz |
+| 5 | Equalization32 | global PEQ (16 bands, L=R) |
+| 6 | GainStage | ×1.1885 (~+1.5 dB) |
+| 7 | 2To4Splitter | stereo → tweeters + woofers |
+| 8 | Equalization32 | tweeter HP **1150 Hz** + HP **650 Hz** + PEQ |
+| 9 | Equalization32 | woofer LP **1180 Hz** + LP **1500 Hz** + PEQ |
+| 10 | Delay | 5 samples |
+| 11 | BuzzKill | |
+| 12–13 | ControlFreak | limiters |
+| 14 | ThermalSpeakerProtection4ch | Apple thermal model |
+| 15 | 4ChOutput | output trim |
+
+The live PipeWire graph is still the measured LR4 **800 Hz** crossover, not
+this chain. Next: map 0/5/8/9 (+ a software peak limiter for 12–14) onto
+`cs8409_speakers`. Do **not** use `speakersafetyd` (MAX98706 has no V/ISENSE).
+
+Filter types: 0 low-pass, 1 high-pass, 4 bell, 6 notch.

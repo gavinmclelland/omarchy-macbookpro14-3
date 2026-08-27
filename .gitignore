@@ -4,3 +4,7 @@
 esp-*
 backups/
 *.hcd
+
+# AppleHDA.kext blobs. Distill coefficients; do not vendor the kext.
+pipewire/applehda/raw/
+pipewire/applehda/parsed.json

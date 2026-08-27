@@ -1,0 +1,1235 @@
+{
+  "file": "layout57.xml.zlib",
+  "layout_id": 57,
+  "path_map_id": 37,
+  "codec_id": 269714441,
+  "tdm_devices": [
+    17027,
+    34566,
+    34566,
+    34566,
+    34566
+  ],
+  "vendors": [
+    {
+      "id": 589824,
+      "hex": "0x90000",
+      "name": "GTK",
+      "hardware_id": 0
+    },
+    {
+      "id": 786432,
+      "hex": "0xc0000",
+      "name": "Merry",
+      "hardware_id": 1
+    }
+  ],
+  "signal_processing_ids": {
+    "589824": 0,
+    "786432": 0
+  },
+  "default_volume_raw": 4293918720,
+  "maximum_boot_beep": 55,
+  "xml_comments": [
+    "0x10138409 CS8409",
+    "L83",
+    "MAX98706 Left Tweeter",
+    "MAX98706 Left Woofer",
+    "MAX98706 Right Tweeter",
+    "MAX98706 Right Woofer",
+    "= -32.0 dB",
+    "0dB",
+    "Speaker Vendor GTK",
+    "Speaker Vendor Merry",
+    "Speaker Vendor GTK",
+    "Speaker Vendor Merry",
+    "= -16.0 dB"
+  ],
+  "chain": [
+    {
+      "key": "DspFunction0",
+      "name": "DspEqualization32",
+      "instance": 0,
+      "index": 0,
+      "role": "protection_hpf",
+      "bands": [
+        {
+          "channel": "L",
+          "type_id": 1,
+          "type": "highpass",
+          "freq_hz": 80.0,
+          "q": 0.7071,
+          "gain_db": -3.01,
+          "slot": 0
+        },
+        {
+          "channel": "R",
+          "type_id": 1,
+          "type": "highpass",
+          "freq_hz": 80.0,
+          "q": 0.7071,
+          "gain_db": -3.01,
+          "slot": 0
+        }
+      ],
+      "bands_l": [
+        {
+          "type_id": 1,
+          "type": "highpass",
+          "freq_hz": 80.0,
+          "q": 0.7071,
+          "gain_db": -3.01,
+          "slot": 0
+        }
+      ]
+    },
+    {
+      "key": "DspFunction1",
+      "name": "DspMozartCompressor",
+      "instance": 1,
+      "index": 1,
+      "params": {
+        "10": 1500.0,
+        "2": -1047527424,
+        "15": 0,
+        "3": 1.8,
+        "11": 1.0,
+        "4": 1,
+        "5": 0,
+        "12": 0,
+        "6": -1032847360,
+        "13": 9.0,
+        "7": 1.6,
+        "8": 0,
+        "14": 6.0,
+        "1": 0,
+        "9": 50.0
+      }
+    },
+    {
+      "key": "DspFunction2",
+      "name": "DspLoudness",
+      "instance": 2,
+      "index": 2,
+      "params": {
+        "10": 300.0,
+        "2": 0,
+        "15": -1032847360,
+        "3": 0,
+        "11": 2000.0,
+        "16": -1061158912,
+        "4": 0,
+        "5": 0,
+        "12": 0.5,
+        "17": -1061158912,
+        "13": 0.15,
+        "14": -1061158912,
+        "1": 0
+      }
+    },
+    {
+      "key": "DspFunction3",
+      "name": "DspEqualization32",
+      "instance": 3,
+      "index": 3,
+      "role": "eq",
+      "bands": [
+        {
+          "channel": "L",
+          "type_id": 6,
+          "type": "notch",
+          "freq_hz": 2500.0,
+          "q": 25.83,
+          "gain_db": 4.0,
+          "slot": 31
+        },
+        {
+          "channel": "R",
+          "type_id": 6,
+          "type": "notch",
+          "freq_hz": 2500.0,
+          "q": 25.83,
+          "gain_db": 4.0,
+          "slot": 31
+        }
+      ],
+      "bands_l": [
+        {
+          "type_id": 6,
+          "type": "notch",
+          "freq_hz": 2500.0,
+          "q": 25.83,
+          "gain_db": 4.0,
+          "slot": 31
+        }
+      ]
+    },
+    {
+      "key": "DspFunction4",
+      "name": "DspMozartCompressorDualBand",
+      "instance": 4,
+      "index": 4,
+      "params": {
+        "18": 1,
+        "10": 1250.0,
+        "19": 1,
+        "11": -1047527424,
+        "12": 1.4,
+        "1": 0,
+        "20": 1,
+        "2": 400.0,
+        "13": 24.0,
+        "3": 4.0,
+        "21": 0,
+        "14": -1044381696,
+        "4": -1047527424,
+        "5": 3.0,
+        "15": 6.0,
+        "6": 24.0,
+        "16": 50.0,
+        "7": -1047527424,
+        "8": 6.0,
+        "17": 1250.0,
+        "9": 50.0
+      }
+    },
+    {
+      "key": "DspFunction5",
+      "name": "DspEqualization32",
+      "instance": 5,
+      "index": 5,
+      "role": "global_peq",
+      "bands": [
+        {
+          "channel": "L",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 9925.85,
+          "q": 2.4,
+          "gain_db": 3.0,
+          "slot": 0
+        },
+        {
+          "channel": "L",
+          "type_id": 6,
+          "type": "notch",
+          "freq_hz": 280.0,
+          "q": 2.0,
+          "gain_db": -20.0,
+          "slot": 1
+        },
+        {
+          "channel": "L",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 730.0,
+          "q": 1.9048,
+          "gain_db": -7.5,
+          "slot": 2
+        },
+        {
+          "channel": "L",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 1550.0,
+          "q": 1.1135,
+          "gain_db": 13.0,
+          "slot": 3
+        },
+        {
+          "channel": "L",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 2200.0,
+          "q": 1.1692,
+          "gain_db": -6.0,
+          "slot": 4
+        },
+        {
+          "channel": "L",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 8250.0,
+          "q": 7.4671,
+          "gain_db": -9.0,
+          "slot": 5
+        },
+        {
+          "channel": "L",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 6000.0,
+          "q": 2.3153,
+          "gain_db": 6.5,
+          "slot": 6
+        },
+        {
+          "channel": "L",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 16011.53,
+          "q": 3.028,
+          "gain_db": -14.427,
+          "slot": 7
+        },
+        {
+          "channel": "L",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 4250.0,
+          "q": 2.0,
+          "gain_db": -2.5,
+          "slot": 8
+        },
+        {
+          "channel": "L",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 165.0,
+          "q": 4.5842,
+          "gain_db": -2.0,
+          "slot": 9
+        },
+        {
+          "channel": "L",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 975.0,
+          "q": 4.8134,
+          "gain_db": -2.0,
+          "slot": 10
+        },
+        {
+          "channel": "L",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 125.0,
+          "q": 2.0,
+          "gain_db": 0.0,
+          "slot": 11
+        },
+        {
+          "channel": "L",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 258.0,
+          "q": 6.4504,
+          "gain_db": 2.5,
+          "slot": 12
+        },
+        {
+          "channel": "L",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 560.0,
+          "q": 4.158,
+          "gain_db": 1.5,
+          "slot": 13
+        },
+        {
+          "channel": "L",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 9750.0,
+          "q": 0.51,
+          "gain_db": -3.0,
+          "slot": 14
+        },
+        {
+          "channel": "L",
+          "type_id": 6,
+          "type": "notch",
+          "freq_hz": 17748.46,
+          "q": 2.0,
+          "gain_db": 7.911,
+          "slot": 15
+        },
+        {
+          "channel": "R",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 9925.85,
+          "q": 2.4,
+          "gain_db": 3.0,
+          "slot": 0
+        },
+        {
+          "channel": "R",
+          "type_id": 6,
+          "type": "notch",
+          "freq_hz": 280.0,
+          "q": 2.0,
+          "gain_db": -20.0,
+          "slot": 1
+        },
+        {
+          "channel": "R",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 730.0,
+          "q": 1.9048,
+          "gain_db": -7.5,
+          "slot": 2
+        },
+        {
+          "channel": "R",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 1550.0,
+          "q": 1.1135,
+          "gain_db": 13.0,
+          "slot": 3
+        },
+        {
+          "channel": "R",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 2200.0,
+          "q": 1.1692,
+          "gain_db": -6.0,
+          "slot": 4
+        },
+        {
+          "channel": "R",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 8250.0,
+          "q": 7.4671,
+          "gain_db": -9.0,
+          "slot": 5
+        },
+        {
+          "channel": "R",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 6000.0,
+          "q": 2.3153,
+          "gain_db": 6.5,
+          "slot": 6
+        },
+        {
+          "channel": "R",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 16011.53,
+          "q": 3.028,
+          "gain_db": -14.427,
+          "slot": 7
+        },
+        {
+          "channel": "R",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 4250.0,
+          "q": 2.0,
+          "gain_db": -2.5,
+          "slot": 8
+        },
+        {
+          "channel": "R",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 165.0,
+          "q": 4.5842,
+          "gain_db": -2.0,
+          "slot": 9
+        },
+        {
+          "channel": "R",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 975.0,
+          "q": 4.8134,
+          "gain_db": -2.0,
+          "slot": 10
+        },
+        {
+          "channel": "R",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 125.0,
+          "q": 2.0,
+          "gain_db": 0.0,
+          "slot": 11
+        },
+        {
+          "channel": "R",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 258.0,
+          "q": 6.4504,
+          "gain_db": 2.5,
+          "slot": 12
+        },
+        {
+          "channel": "R",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 560.0,
+          "q": 4.158,
+          "gain_db": 1.5,
+          "slot": 13
+        },
+        {
+          "channel": "R",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 9750.0,
+          "q": 0.51,
+          "gain_db": -3.0,
+          "slot": 14
+        },
+        {
+          "channel": "R",
+          "type_id": 6,
+          "type": "notch",
+          "freq_hz": 17748.46,
+          "q": 2.0,
+          "gain_db": 7.911,
+          "slot": 15
+        }
+      ],
+      "bands_l": [
+        {
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 9925.85,
+          "q": 2.4,
+          "gain_db": 3.0,
+          "slot": 0
+        },
+        {
+          "type_id": 6,
+          "type": "notch",
+          "freq_hz": 280.0,
+          "q": 2.0,
+          "gain_db": -20.0,
+          "slot": 1
+        },
+        {
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 730.0,
+          "q": 1.9048,
+          "gain_db": -7.5,
+          "slot": 2
+        },
+        {
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 1550.0,
+          "q": 1.1135,
+          "gain_db": 13.0,
+          "slot": 3
+        },
+        {
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 2200.0,
+          "q": 1.1692,
+          "gain_db": -6.0,
+          "slot": 4
+        },
+        {
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 8250.0,
+          "q": 7.4671,
+          "gain_db": -9.0,
+          "slot": 5
+        },
+        {
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 6000.0,
+          "q": 2.3153,
+          "gain_db": 6.5,
+          "slot": 6
+        },
+        {
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 16011.53,
+          "q": 3.028,
+          "gain_db": -14.427,
+          "slot": 7
+        },
+        {
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 4250.0,
+          "q": 2.0,
+          "gain_db": -2.5,
+          "slot": 8
+        },
+        {
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 165.0,
+          "q": 4.5842,
+          "gain_db": -2.0,
+          "slot": 9
+        },
+        {
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 975.0,
+          "q": 4.8134,
+          "gain_db": -2.0,
+          "slot": 10
+        },
+        {
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 125.0,
+          "q": 2.0,
+          "gain_db": 0.0,
+          "slot": 11
+        },
+        {
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 258.0,
+          "q": 6.4504,
+          "gain_db": 2.5,
+          "slot": 12
+        },
+        {
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 560.0,
+          "q": 4.158,
+          "gain_db": 1.5,
+          "slot": 13
+        },
+        {
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 9750.0,
+          "q": 0.51,
+          "gain_db": -3.0,
+          "slot": 14
+        },
+        {
+          "type_id": 6,
+          "type": "notch",
+          "freq_hz": 17748.46,
+          "q": 2.0,
+          "gain_db": 7.911,
+          "slot": 15
+        }
+      ]
+    },
+    {
+      "key": "DspFunction6",
+      "name": "DspGainStage",
+      "instance": 6,
+      "index": 6,
+      "params": {
+        "3": 1.188502,
+        "1": 0,
+        "2": 1.188502
+      }
+    },
+    {
+      "key": "DspFunction7",
+      "name": "Dsp2To4Splitter",
+      "instance": 7,
+      "index": 7
+    },
+    {
+      "key": "DspFunction8",
+      "name": "DspEqualization32",
+      "instance": 8,
+      "index": 8,
+      "role": "tweeter_crossover_eq",
+      "bands": [
+        {
+          "channel": "L",
+          "type_id": 1,
+          "type": "highpass",
+          "freq_hz": 1150.0,
+          "q": 0.707,
+          "gain_db": -3.01,
+          "slot": 0
+        },
+        {
+          "channel": "L",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 1950.0,
+          "q": 2.98,
+          "gain_db": -8.5,
+          "slot": 1
+        },
+        {
+          "channel": "L",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 13200.0,
+          "q": 2.955,
+          "gain_db": -8.5,
+          "slot": 2
+        },
+        {
+          "channel": "L",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 2720.0,
+          "q": 2.707,
+          "gain_db": -3.5,
+          "slot": 3
+        },
+        {
+          "channel": "L",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 4620.0,
+          "q": 6.45,
+          "gain_db": -2.5,
+          "slot": 4
+        },
+        {
+          "channel": "L",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 10850.0,
+          "q": 4.2,
+          "gain_db": -3.0,
+          "slot": 5
+        },
+        {
+          "channel": "L",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 7659.0,
+          "q": 1.702,
+          "gain_db": -3.0,
+          "slot": 6
+        },
+        {
+          "channel": "L",
+          "type_id": 1,
+          "type": "highpass",
+          "freq_hz": 650.0,
+          "q": 0.7071,
+          "gain_db": -3.01,
+          "slot": 8
+        },
+        {
+          "channel": "R",
+          "type_id": 1,
+          "type": "highpass",
+          "freq_hz": 1150.0,
+          "q": 0.707,
+          "gain_db": -3.01,
+          "slot": 0
+        },
+        {
+          "channel": "R",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 1950.0,
+          "q": 2.98,
+          "gain_db": -8.5,
+          "slot": 1
+        },
+        {
+          "channel": "R",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 13200.0,
+          "q": 2.955,
+          "gain_db": -8.5,
+          "slot": 2
+        },
+        {
+          "channel": "R",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 2720.0,
+          "q": 2.707,
+          "gain_db": -3.5,
+          "slot": 3
+        },
+        {
+          "channel": "R",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 4620.0,
+          "q": 6.45,
+          "gain_db": -2.5,
+          "slot": 4
+        },
+        {
+          "channel": "R",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 10850.0,
+          "q": 4.2,
+          "gain_db": -3.0,
+          "slot": 5
+        },
+        {
+          "channel": "R",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 7659.0,
+          "q": 1.702,
+          "gain_db": -3.0,
+          "slot": 6
+        },
+        {
+          "channel": "R",
+          "type_id": 1,
+          "type": "highpass",
+          "freq_hz": 650.0,
+          "q": 0.7071,
+          "gain_db": -3.01,
+          "slot": 8
+        }
+      ],
+      "bands_l": [
+        {
+          "type_id": 1,
+          "type": "highpass",
+          "freq_hz": 1150.0,
+          "q": 0.707,
+          "gain_db": -3.01,
+          "slot": 0
+        },
+        {
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 1950.0,
+          "q": 2.98,
+          "gain_db": -8.5,
+          "slot": 1
+        },
+        {
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 13200.0,
+          "q": 2.955,
+          "gain_db": -8.5,
+          "slot": 2
+        },
+        {
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 2720.0,
+          "q": 2.707,
+          "gain_db": -3.5,
+          "slot": 3
+        },
+        {
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 4620.0,
+          "q": 6.45,
+          "gain_db": -2.5,
+          "slot": 4
+        },
+        {
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 10850.0,
+          "q": 4.2,
+          "gain_db": -3.0,
+          "slot": 5
+        },
+        {
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 7659.0,
+          "q": 1.702,
+          "gain_db": -3.0,
+          "slot": 6
+        },
+        {
+          "type_id": 1,
+          "type": "highpass",
+          "freq_hz": 650.0,
+          "q": 0.7071,
+          "gain_db": -3.01,
+          "slot": 8
+        }
+      ]
+    },
+    {
+      "key": "DspFunction9",
+      "name": "DspEqualization32",
+      "instance": 9,
+      "index": 9,
+      "role": "woofer_crossover_eq",
+      "bands": [
+        {
+          "channel": "L",
+          "type_id": 0,
+          "type": "lowpass",
+          "freq_hz": 1180.0,
+          "q": 0.707,
+          "gain_db": -3.01,
+          "slot": 0
+        },
+        {
+          "channel": "L",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 495.0,
+          "q": 4.0,
+          "gain_db": -0.7,
+          "slot": 1
+        },
+        {
+          "channel": "L",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 775.0,
+          "q": 3.79,
+          "gain_db": -4.0,
+          "slot": 2
+        },
+        {
+          "channel": "L",
+          "type_id": 0,
+          "type": "lowpass",
+          "freq_hz": 1500.0,
+          "q": 0.7071,
+          "gain_db": -3.01,
+          "slot": 3
+        },
+        {
+          "channel": "L",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 1250.0,
+          "q": 2.43,
+          "gain_db": -3.0,
+          "slot": 4
+        },
+        {
+          "channel": "L",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 1000.0,
+          "q": 2.93,
+          "gain_db": -1.0,
+          "slot": 5
+        },
+        {
+          "channel": "L",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 2240.0,
+          "q": 3.65,
+          "gain_db": -12.0,
+          "slot": 6
+        },
+        {
+          "channel": "R",
+          "type_id": 0,
+          "type": "lowpass",
+          "freq_hz": 1180.0,
+          "q": 0.707,
+          "gain_db": -3.01,
+          "slot": 0
+        },
+        {
+          "channel": "R",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 495.0,
+          "q": 4.0,
+          "gain_db": -0.7,
+          "slot": 1
+        },
+        {
+          "channel": "R",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 775.0,
+          "q": 3.79,
+          "gain_db": -4.0,
+          "slot": 2
+        },
+        {
+          "channel": "R",
+          "type_id": 0,
+          "type": "lowpass",
+          "freq_hz": 1500.0,
+          "q": 0.7071,
+          "gain_db": -3.01,
+          "slot": 3
+        },
+        {
+          "channel": "R",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 1250.0,
+          "q": 2.43,
+          "gain_db": -3.0,
+          "slot": 4
+        },
+        {
+          "channel": "R",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 1000.0,
+          "q": 2.93,
+          "gain_db": -1.0,
+          "slot": 5
+        },
+        {
+          "channel": "R",
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 2240.0,
+          "q": 3.65,
+          "gain_db": -12.0,
+          "slot": 6
+        }
+      ],
+      "bands_l": [
+        {
+          "type_id": 0,
+          "type": "lowpass",
+          "freq_hz": 1180.0,
+          "q": 0.707,
+          "gain_db": -3.01,
+          "slot": 0
+        },
+        {
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 495.0,
+          "q": 4.0,
+          "gain_db": -0.7,
+          "slot": 1
+        },
+        {
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 775.0,
+          "q": 3.79,
+          "gain_db": -4.0,
+          "slot": 2
+        },
+        {
+          "type_id": 0,
+          "type": "lowpass",
+          "freq_hz": 1500.0,
+          "q": 0.7071,
+          "gain_db": -3.01,
+          "slot": 3
+        },
+        {
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 1250.0,
+          "q": 2.43,
+          "gain_db": -3.0,
+          "slot": 4
+        },
+        {
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 1000.0,
+          "q": 2.93,
+          "gain_db": -1.0,
+          "slot": 5
+        },
+        {
+          "type_id": 4,
+          "type": "peaking",
+          "freq_hz": 2240.0,
+          "q": 3.65,
+          "gain_db": -12.0,
+          "slot": 6
+        }
+      ]
+    },
+    {
+      "key": "DspFunction10",
+      "name": "DspDelay",
+      "instance": 10,
+      "index": 10,
+      "params": {
+        "1": 0,
+        "2": 5
+      }
+    },
+    {
+      "key": "DspFunction11",
+      "name": "DspBuzzKill",
+      "instance": 11,
+      "index": 11,
+      "params": {
+        "3": 0,
+        "12": 0,
+        "21": 243.066772,
+        "4": 0,
+        "30": 0,
+        "13": 166.246521,
+        "5": 19.468296,
+        "22": -1050858800,
+        "6": -1049871344,
+        "31": 1.0,
+        "14": -1054909416,
+        "40": 0,
+        "23": 3.455748,
+        "7": 1.0,
+        "32": 0,
+        "15": 1.0,
+        "41": 10000.0,
+        "8": 1.0,
+        "24": 0,
+        "33": 5000.0,
+        "16": 1.0,
+        "42": 0,
+        "25": 1408.021484,
+        "9": 86.668427,
+        "34": 0,
+        "17": 160.448776,
+        "43": 1.0,
+        "26": -1046381856,
+        "35": 1.0,
+        "18": -1056571752,
+        "44": 5,
+        "27": 3.078809,
+        "36": 0,
+        "19": 1.390011,
+        "28": 0,
+        "37": 10000.0,
+        "29": 2098.12207,
+        "38": 0,
+        "39": 1.0,
+        "10": -1050767616,
+        "1": 0,
+        "11": 4.336352,
+        "2": 0,
+        "20": 1.0
+      }
+    },
+    {
+      "key": "DspFunction12",
+      "name": "DspControlFreak",
+      "instance": 12,
+      "index": 12,
+      "params": {
+        "7": 0,
+        "3": -1110651699,
+        "8": 0,
+        "4": 16.0,
+        "9": 0,
+        "5": 1.0,
+        "1": 0,
+        "6": 0,
+        "2": 0
+      }
+    },
+    {
+      "key": "DspFunction13",
+      "name": "DspControlFreak",
+      "instance": 13,
+      "index": 13,
+      "params": {
+        "7": 0,
+        "3": -1110651699,
+        "8": 0,
+        "4": 16.0,
+        "9": 0,
+        "5": 1.0,
+        "1": 0,
+        "6": 0,
+        "2": 0
+      }
+    },
+    {
+      "key": "DspFunction14",
+      "name": "DspThermalSpeakerProtection4ch",
+      "instance": 14,
+      "index": 14,
+      "params": {
+        "3": 9.0,
+        "12": 20000.0,
+        "21": 130.0,
+        "4": 5.1,
+        "30": 133.899994,
+        "13": 15.0,
+        "5": 39.5,
+        "22": 800.0,
+        "6": 1.2,
+        "31": 50.0,
+        "14": 9.0,
+        "40": 20.9,
+        "23": 20000.0,
+        "7": 20.799999,
+        "32": 130.0,
+        "15": 5.1,
+        "41": 133.899994,
+        "8": 80.599998,
+        "24": 15.0,
+        "33": 800.0,
+        "16": 39.5,
+        "42": 50.0,
+        "25": 9.0,
+        "9": 50.0,
+        "34": 20000.0,
+        "17": 1.2,
+        "43": 130.0,
+        "26": 4.4,
+        "35": 15.0,
+        "18": 20.799999,
+        "44": 800.0,
+        "27": 18.9,
+        "36": 9.0,
+        "19": 80.599998,
+        "45": 20000.0,
+        "28": 2.6,
+        "37": 4.4,
+        "46": 15.0,
+        "29": 20.9,
+        "38": 18.9,
+        "39": 2.6,
+        "10": 130.0,
+        "1": 0,
+        "11": 800.0,
+        "2": 2.0,
+        "20": 50.0
+      }
+    },
+    {
+      "key": "DspFunction15",
+      "name": "Dsp4ChOutput",
+      "instance": 15,
+      "index": 15,
+      "params": {
+        "10": 0,
+        "2": 0.0833,
+        "15": 0,
+        "3": 0.0833,
+        "11": 0,
+        "16": 0,
+        "4": 0,
+        "5": 0,
+        "12": 0,
+        "17": 0,
+        "6": 0,
+        "13": 0,
+        "7": 0,
+        "18": 1.0,
+        "8": 0,
+        "14": 0,
+        "1": 0,
+        "9": 0
+      }
+    }
+  ],
+  "codec_hint": {
+    "vendor": "0x10138409",
+    "subsystem": "0x106b3900",
+    "dmi": "MacBookPro14,3",
+    "amp": "MAX98706"
+  }
+}
