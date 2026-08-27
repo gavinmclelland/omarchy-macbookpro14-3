@@ -196,6 +196,10 @@ def build_graph(invert: bool, delay: bool, use_limiter: bool) -> tuple[list[str]
         # Lid-mic vs electrical on Mastering The Mix refs: speakers add
         # ~20 dB of 700–1200 Hz vs 160–350 Hz. A modest 1 kHz cut.
         peq.append({"label": "bq_peaking", "freq": 1050.0, "q": 1.20, "gain": -3.0})
+        # YG “Hard Bottoms & White Socks”: electrical 40–160 Hz is the
+        # loudest band (woofers); air loses 80–160 vs 350–700. +3 dB @ 100 Hz
+        # is the bass tone these MAX98706s can radiate. Not a 40 Hz sub.
+        peq.append({"label": "bq_peaking", "freq": 100.0, "q": 0.85, "gain": 3.0})
     tw = rows_from(bands(c["DspFunction8"]))
     wf = rows_from(bands(c["DspFunction9"]))
 
