@@ -7,6 +7,7 @@ Not Mozart, BuzzKill, ControlFreak, or thermal. Clamp is the limiter.
 
     python3 render_filter.py            # invert on (flatter 1 kHz on this cabinet)
     python3 render_filter.py --no-invert
+    python3 render_filter.py --delay    # Apple DspDelay 5 samples on woofers
 """
 from __future__ import annotations
 
@@ -108,8 +109,16 @@ def main() -> int:
         default=True,
         help="invert woofers (default on: 1 kHz hole is smaller than --no-invert)",
     )
+    ap.add_argument(
+        "--delay",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="woofer delay of 5 samples (Apple DspDelay; default on: 1 kHz ~flat)",
+    )
     args = ap.parse_args()
     invert = bool(args.invert)
+    delay = bool(args.delay)
+    delay_s = 5.0 / 44100.0
 
     data = json.loads(LAYOUT.read_text())
     c = chain_by_key(data)
@@ -176,6 +185,39 @@ def main() -> int:
         ]
         invert_note = "Woofer invert OFF (Apple staggered HP/LP; measure 1 kHz)."
 
+    delay_note = "No DspDelay."
+    if delay:
+        nodes += [
+            "                    {\n"
+            "                        name = dlyL\n"
+            "                        type = builtin\n"
+            "                        label = delay\n"
+            '                        config = { "max-delay" = 0.01 }\n'
+            f'                        control = {{ "Delay (s)" = {delay_s:.10f} }}\n'
+            "                    }",
+            "                    {\n"
+            "                        name = dlyR\n"
+            "                        type = builtin\n"
+            "                        label = delay\n"
+            '                        config = { "max-delay" = 0.01 }\n'
+            f'                        control = {{ "Delay (s)" = {delay_s:.10f} }}\n'
+            "                    }",
+        ]
+        # Rewire woofer path: ... → delay → clamp
+        wfL_to_clamp = [
+            line.replace('input = "clWfL:In"', 'input = "dlyL:In"')
+            if 'clWfL:In' in line
+            else line.replace('input = "clWfR:In"', 'input = "dlyR:In"')
+            if 'clWfR:In' in line
+            else line
+            for line in wfL_to_clamp
+        ]
+        wfL_to_clamp += [
+            '                    { output = "dlyL:Out" input = "clWfL:In" }',
+            '                    { output = "dlyR:Out" input = "clWfR:In" }',
+        ]
+        delay_note = "Woofer delay 5 samples (Apple DspDelay)."
+
     links += [
         f'                    {{ output = "{twL_out}" input = "clTwL:In" }}',
         f'                    {{ output = "{twR_out}" input = "clTwR:In" }}',
@@ -189,7 +231,7 @@ def main() -> int:
 #
 # Keep davidjo for amp/TDM. Builtin bq_* (param_eq dropped RL/RR).
 # Not Mozart / BuzzKill / ControlFreak / thermal. Clamp is the limiter.
-# {invert_note}
+# {invert_note} {delay_note}
 # Parked 800 Hz LR4: 60-cs8409-lr4.conf
 context.modules = [
     {{ name = libpipewire-module-filter-chain

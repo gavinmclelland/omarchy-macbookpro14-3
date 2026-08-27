@@ -42,14 +42,14 @@ Stereo processing, then `Dsp2To4Splitter`:
 | 14 | ThermalSpeakerProtection4ch | Apple thermal model |
 | 15 | 4ChOutput | output trim |
 
-Live graph (`../60-cs8409-crossover.conf`) maps 0/3/5/6/8/9 plus a hard
-clamp as chained `bq_*` nodes. Woofer invert **on** (tones: 1 kHz −4 dB vs
-500 Hz; `--no-invert` is −10 dB). `param_eq` fan-out left RL/RR silent. Not
-1/2/4/11–14 (undocumented). Five-sample `DspDelay` not applied yet.
+Live graph (`../60-cs8409-crossover.conf`) maps 0/3/5/6/8/9/10 plus a hard
+clamp as chained `bq_*` nodes. Invert **on**, woofer delay **5 samples**.
+Tones: 1 kHz vs 500 Hz **−0.7 dB**. `param_eq` fan-out left RL/RR silent. Not
+1/2/4/11–14 (undocumented).
 
 ```bash
-python3 render_filter.py          # invert on
-python3 render_filter.py --no-invert
+python3 render_filter.py
+python3 render_filter.py --no-delay
 python3 measure_crossover.py
 ```
 
