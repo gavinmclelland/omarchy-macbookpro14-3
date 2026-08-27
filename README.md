@@ -27,7 +27,7 @@ DMI product. Esc is the left Touch Bar key, not a separate device.
 | | State | Where |
 | --- | --- | --- |
 | Wi-Fi 5 GHz | works | `firmware/brcm/` |
-| Speakers + mic | works; layout 57 host | `pipewire/speaker-tuning/` [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) — davidjo + `cs8409_speakers`, not a new kernel driver |
+| Speakers + mic | works; layout 57 host | `pipewire/speaker-tuning/` [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) — test with Still D.R.E.; 80 Hz–16 kHz, not 40 Hz 808 |
 | Spotify CEF abort | [#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15) | `string_view::substr` SIGTRAP — app, not CS8409 |
 | FaceTime webcam | works | iBridge UVC `/dev/video0` 1280×720 |
 | Touch Bar Esc + media + F1–F12 | works | `drivers/` + `keyd/` + `systemd/touchbar*` |

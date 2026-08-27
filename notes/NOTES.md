@@ -74,7 +74,7 @@ Native path: `apple_ib_tb` watches `KEY_FN` on the SPI keyboard (`tbkbd`). That 
 
 Workaround (`systemd/touchbar-fn.service`): `keyd listen` emits `+fn`/`-fn` for the keyd `fn` layer. The watcher writes `fnmode=0` (F-keys) on hold and `fnmode=1` (media) on release. Keep the layer named `fn`. keyd `Fn+\`` Esc is unchanged. **User-confirmed:** hold Fn switches the strip to F1–F12. [#16](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/16) closed.
 
-Idle: `idle_timeout=300` `dim_timeout=150` (lock / screensaver). Not user-confirmed yet. [#1](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/1).
+Idle: live `idle_timeout=300` `dim_timeout=150` (lock / screensaver). Not sat idle to confirm dim. keyd grab may mean only TB/trackpad reset `last_event_time`. [#1](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/1).
 
 Custom pixels / Siri orb: needs iBridge **USB config 2** + DRM (`xeeban` `appletbdrm`/`dfrd`). `tiny-dfr` is T2-only. Parked [#6](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/6).
 
@@ -162,11 +162,11 @@ nvme0n1p4  231G  LUKS/btrfs        Omarchy
 
 | Issue | Needs |
 | --- | --- |
-| [#1](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/1) TB dim | Leave idle ~150 s / 300 s and confirm |
+| [#1](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/1) TB dim | Live `idle=300 dim=150`. Sit idle ~150 s (no trackpad/TB); keyd grab may starve keyboard wake. |
 | [#10](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/10) Wi-Fi Apple MAC | **Reboot** (NVRAM already written) |
 | [#11](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/11) Option EFI Boot | **Reboot**, hold Option |
 | [#12](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/12) suspend/resume | One `systemctl suspend` / lid: TB, ALS, USB-C, Wi-Fi, T1 still `8600` |
-| [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) speaker quality | Layout 57 Apple-order host: Mozart + Loudness shelves + dual-band + XML PEQ. 80 Hz–16 kHz. DSP unity; TB volume is physical 4ch |
+| [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) speaker quality | Host live. Best test: Still D.R.E. Cabinet eats 80–160 Hz, adds 1–3 kHz. BuzzKill/thermal still out. PR #18 |
 | [#2](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/2) Polaris GPU-process FATAL | Chromium mitigated; Spotify CEF still GPU. Per-app `--disable-gpu` or a real Mesa/BAR fix |
 | [#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15) Spotify CEF abort | PID 67730 `substr` trap. PID 9990 (16:43) is #2, not this |
 
