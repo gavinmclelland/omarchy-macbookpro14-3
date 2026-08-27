@@ -32,9 +32,9 @@ DMI product. Esc is the left Touch Bar key, not a separate device.
 | Touch Bar Esc + media + F1–F12 | works | `drivers/` + `keyd/` + `systemd/touchbar*` |
 | USB-C after suspend | works | `boot/` `pcie_ports=compat` |
 | NVMe suspend | works | `d3cold_allowed=0` on `0000:02:00.0` |
-| Radeon Pro 560 panel | works | `amdgpu` `eDP-1` |
+| Radeon Pro 560 panel | works (256 MiB visible BAR) | `amdgpu` `eDP-1` — Intel cannot drive the LCD |
 | TB dim with screen idle | [#1](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/1) | `phase:work` |
-| Chromium GPU abort | mitigated `--disable-gpu` | [#2](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/2) closed |
+| Chromium / CEF GPU abort | Chromium mitigated; Spotify still hits it | [#2](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/2) **reopened** |
 | ALS / IIO lux | works | [#3](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/3) closed |
 | Bluetooth discovery | works | [#4](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/4) closed |
 | Keyboard backlight | works | [#8](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/8) closed |
@@ -76,6 +76,7 @@ watches the keyd `fn` layer and writes `fnmode` 0/1. Keep that layer named
 ## Still open
 
 Work: [#1](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/1)
+[#2](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/2)
 [#10](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/10)
 [#11](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/11)
 [#12](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/12)

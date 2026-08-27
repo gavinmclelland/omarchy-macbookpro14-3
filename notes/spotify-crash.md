@@ -67,6 +67,18 @@ bounds abort in CEF UI, not a GPU-process fatal.
 Hardware acceleration had been on in the CEF profile. Dual GPU (Intel HD 630 +
 AMD Polaris11) is background, not implicated by the crashing frame.
 
+## Later dump is #2 (2026-08-26 16:43)
+
+PID **9990** is **not** this bug. `chrome_debug.log` (overwritten at 16:43):
+
+```
+FATAL:content/browser/gpu/gpu_data_manager_impl_private.cc:417 GPU process isn't usable. Goodbye.
+```
+
+[#2](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/2) reopened.
+This file still describes PID 67730 only. The GPU log line replaced whatever
+FATAL text the first dump wrote, so we cannot re-check 00:39 from disk.
+
 ## Related to #14 (speakers / Spotify attach)
 
 Issue #14 parked the 4ch crossover because Spotify could not play (`SiStandardLink`

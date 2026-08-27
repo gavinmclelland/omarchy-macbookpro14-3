@@ -96,9 +96,11 @@ iBridge UVC `/dev/video0`, MJPEG 1280×720. First ffmpeg frame is black (AGC); a
 
 `hci0` up from ROM. 8 s scan found LE devices (including a Bose). Apple `BCM20703-MiniDriver-uart.hex` is **not** a Linux HCI `.hcd`. Do not drop a guessed `BCM.hcd`.
 
-### Chromium GPU ([#2](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/2) closed)
+### Chromium / CEF GPU ([#2](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/2) reopened)
 
 Chromium 151 `LOG(FATAL)` `GPU process isn't usable` on Polaris11 `renderD128` (two SIGTRAPs during `gh auth login --web`). Not OOM, not Omarchy. Workaround: `--disable-gpu` in `~/.config/chromium-flags.conf`. Later process list showed `--use-gl=disabled`. Details: `notes/chromium-gpu.md`.
+
+**Reopened 2026-08-26:** Spotify PID 9990 (16:43:05 PDT, 5h 36m) died with the same FATAL in `~/.cache/spotify/chrome_debug.log` (`gpu_data_manager_impl_private.cc:417`). Chromium flags do not cover CEF. No `spotify-flags.conf`. Intel cannot drive the LCD (eDP is AMD-only; i915 disabled its eDP). Visible BAR 256 MiB of 4 GiB. `--disable-gpu` for Spotify is the same bandaid, not applied yet. Distinct from [#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15).
 
 ### Spotify CEF abort ([#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15))
 
@@ -163,7 +165,8 @@ nvme0n1p4  231G  LUKS/btrfs        Omarchy
 | [#11](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/11) Option EFI Boot | **Reboot**, hold Option |
 | [#12](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/12) suspend/resume | One `systemctl suspend` / lid: TB, ALS, USB-C, Wi-Fi, T1 still `8600` |
 | [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) speaker quality | Graph is live (stereo sink → 4ch). Confirm it sounds right; AppleHDA EQ later |
-| [#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15) Spotify CEF abort | Repro or close as one-off `substr` trap |
+| [#2](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/2) Polaris GPU-process FATAL | Chromium mitigated; Spotify CEF still GPU. Per-app `--disable-gpu` or a real Mesa/BAR fix |
+| [#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15) Spotify CEF abort | PID 67730 `substr` trap. PID 9990 (16:43) is #2, not this |
 
 ## Open better (parked)
 
@@ -179,4 +182,5 @@ nvme0n1p4  231G  LUKS/btrfs        Omarchy
 - Bluetooth: no invented `.hcd`.
 - Audio: do not set a 4ch virtual sink as default until Spotify/Chromium attach to it.
 - Chromium on this dual GPU: `--disable-gpu` if it `SIGTRAP`s.
-- Spotify CEF abort (`string_view::substr`) is **not** the Chromium GPU fatal; do not apply `--disable-gpu` as the fix unless a later dump shows that path.
+- Spotify CEF abort (`string_view::substr`, [#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15)) is **not** the Chromium GPU fatal. A **later** Spotify dump (PID 9990, 16:43) **is** that GPU fatal — [#2](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/2) reopened. Do not pin apps to Intel; the panel is AMD-only.
+- Do not treat Intel as the “main GPU” for AI/offload. i915 has no eDP. Polaris visible BAR is 256 MiB.
