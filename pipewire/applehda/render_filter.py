@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """Render PipeWire filter-chain from layout57.json.
 
-Stereo sink cs8409_speakers → 4ch analog-surround-40.
-Uses builtin bq_* nodes (param_eq In 2 / fan-out dropped the woofers).
-Not Mozart, BuzzKill, ControlFreak, or thermal. Clamp is the limiter.
+Stereo sink → 4ch MAX98706. Builtin bq_* (param_eq dropped RL/RR).
+Not Mozart, BuzzKill, ControlFreak, or thermal.
 
-    python3 render_filter.py            # invert on (flatter 1 kHz on this cabinet)
+    python3 render_filter.py              # both formats (invert + delay on)
     python3 render_filter.py --no-invert
-    python3 render_filter.py --delay    # Apple DspDelay 5 samples on woofers
+    python3 render_filter.py --no-delay
 """
 from __future__ import annotations
 
@@ -17,7 +16,22 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 LAYOUT = Path(__file__).resolve().parent / "layout57.json"
-OUT = ROOT / "60-cs8409-crossover.conf"
+DAEMON_OUT = ROOT / "60-cs8409-crossover.conf"
+HOST_OUT = ROOT / "speaker-tuning" / "macbookpro14-3" / "filter-chain.conf"
+
+# Dell XPS host uses the same plugin with ALR/boost off so tone does not
+# drift with programme level. g_in 0.5456 ≈ −5.3 dB replaces the daemon's
+# −6 dB pre highshelf. th 0.891 ≈ −1 dBFS.
+LIMITER = """                    { type   = lv2
+                      name   = limiter
+                      plugin = "http://lsp-plug.in/plugins/lv2/limiter_stereo"
+                      control = {
+                          "alr"   = 0
+                          "boost" = 0
+                          "g_in"  = 0.5456
+                          "th"    = 0.891
+                      }
+                    }"""
 
 BQ = {
     "lowpass": "bq_lowpass",
@@ -101,30 +115,16 @@ def clamp(name: str) -> str:
     )
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument(
-        "--invert",
-        action=argparse.BooleanOptionalAction,
-        default=True,
-        help="invert woofers (default on: 1 kHz hole is smaller than --no-invert)",
-    )
-    ap.add_argument(
-        "--delay",
-        action=argparse.BooleanOptionalAction,
-        default=True,
-        help="woofer delay of 5 samples (Apple DspDelay; default on: 1 kHz ~flat)",
-    )
-    args = ap.parse_args()
-    invert = bool(args.invert)
-    delay = bool(args.delay)
+def build_graph(invert: bool, delay: bool, use_limiter: bool) -> tuple[list[str], list[str], str, str]:
     delay_s = 5.0 / 44100.0
-
     data = json.loads(LAYOUT.read_text())
     c = chain_by_key(data)
+    extra_head = []
+    if not use_limiter:
+        extra_head = [{"label": "bq_highshelf", "freq": 0.0, "q": 1.0, "gain": -6.0}]
     pre = rows_from(
         bands(c["DspFunction0"]) + bands(c["DspFunction3"]) + bands(c["DspFunction5"]),
-        extra_head=[{"label": "bq_highshelf", "freq": 0.0, "q": 1.0, "gain": -6.0}],
+        extra_head=extra_head,
         extra_tail=[{"label": "bq_highshelf", "freq": 0.0, "q": 1.0, "gain": 1.5}],
     )
     tw = rows_from(bands(c["DspFunction8"]))
@@ -141,6 +141,9 @@ def main() -> int:
         clamp("clWfR"),
     ]
     links: list[str] = []
+    if use_limiter:
+        nodes.append(LIMITER)
+
     n, l, preL_out = series("preL", pre, "copyIL:Out")
     nodes.extend(n)
     links.extend(l)
@@ -148,10 +151,18 @@ def main() -> int:
     nodes.extend(n)
     links.extend(l)
 
-    links += [
-        f'                    {{ output = "{preL_out}" input = "splitL:In" }}',
-        f'                    {{ output = "{preR_out}" input = "splitR:In" }}',
-    ]
+    if use_limiter:
+        links += [
+            f'                    {{ output = "{preL_out}" input = "limiter:in_l" }}',
+            f'                    {{ output = "{preR_out}" input = "limiter:in_r" }}',
+            '                    { output = "limiter:out_l" input = "splitL:In" }',
+            '                    { output = "limiter:out_r" input = "splitR:In" }',
+        ]
+    else:
+        links += [
+            f'                    {{ output = "{preL_out}" input = "splitL:In" }}',
+            f'                    {{ output = "{preR_out}" input = "splitR:In" }}',
+        ]
 
     n, l, twL_out = series("twL", tw, "splitL:Out")
     nodes.extend(n)
@@ -203,12 +214,11 @@ def main() -> int:
             f'                        control = {{ "Delay (s)" = {delay_s:.10f} }}\n'
             "                    }",
         ]
-        # Rewire woofer path: ... → delay → clamp
         wfL_to_clamp = [
             line.replace('input = "clWfL:In"', 'input = "dlyL:In"')
-            if 'clWfL:In' in line
+            if "clWfL:In" in line
             else line.replace('input = "clWfR:In"', 'input = "dlyR:In"')
-            if 'clWfR:In' in line
+            if "clWfR:In" in line
             else line
             for line in wfL_to_clamp
         ]
@@ -223,12 +233,14 @@ def main() -> int:
         f'                    {{ output = "{twR_out}" input = "clTwR:In" }}',
     ]
     links += wfL_to_clamp
+    return nodes, links, invert_note, delay_note
 
-    # series() already linked copyIL→preL0; drop the duplicate we skipped.
 
-    text = f"""# Generated by applehda/render_filter.py from layout57.json.
+def emit_daemon(nodes: list[str], links: list[str], invert_note: str, delay_note: str) -> str:
+    return f"""# Generated by applehda/render_filter.py from layout57.json.
 # MacBookPro14,3: stereo sink → 4ch MAX98706. Do not edit by hand.
 #
+# Parked rollback (daemon drop-in). Live path is speaker-tuning/macbookpro14-3/.
 # Keep davidjo for amp/TDM. Builtin bq_* (param_eq dropped RL/RR).
 # Not Mozart / BuzzKill / ControlFreak / thermal. Clamp is the limiter.
 # {invert_note} {delay_note}
@@ -276,8 +288,90 @@ context.modules = [
     }}
 ]
 """
-    OUT.write_text(text)
-    print("wrote", OUT, "nodes", len(nodes), "links", len(links))
+
+
+def emit_host(nodes: list[str], links: list[str], invert_note: str, delay_note: str) -> str:
+    return f"""# Generated by applehda/render_filter.py from layout57.json.
+# MacBookPro14,3 (A1707): stereo cs8409_speakers → 4ch MAX98706.
+# Do not edit by hand. Hosted by pipewire -c cs8409-speaker-tuning.conf.
+#
+# Keep davidjo for amp/TDM. Builtin bq_* (param_eq dropped RL/RR).
+# Not Mozart / BuzzKill / ControlFreak / thermal.
+# LSP limiter_stereo on the 2ch bus (alr/boost off); clamp ±0.98 after split.
+# {invert_note} {delay_note}
+# install.sh substitutes @SPEAKER_SINK@ from sink_pattern.
+context.modules = [
+    {{ name = libpipewire-module-filter-chain
+        args = {{
+            node.description = "MacBook speakers"
+            media.name       = "MacBook speakers"
+            filter.graph = {{
+                nodes = [
+{chr(10).join(nodes)}
+                ]
+                links = [
+{chr(10).join(links)}
+                ]
+                inputs  = [ "copyIL:In" "copyIR:In" ]
+                outputs = [ "clTwL:Out" "clTwR:Out" "clWfL:Out" "clWfR:Out" ]
+            }}
+            capture.props = {{
+                node.name             = "cs8409_speakers"
+                node.description      = "MacBook speakers"
+                media.class           = "Audio/Sink"
+                audio.position        = [ FL FR ]
+                audio.channels        = 2
+                audio.rate            = 44100
+                channelmix.disable    = true
+                priority.session      = 1400
+                priority.driver       = 1400
+            }}
+            playback.props = {{
+                node.name             = "cs8409_speakers.playback"
+                media.class           = "Stream/Output/Audio"
+                audio.position        = [ FL FR RL RR ]
+                audio.channels        = 4
+                audio.rate            = 44100
+                stream.dont-remix     = true
+                channelmix.disable    = true
+                node.passive          = true
+                node.dont-move        = true
+                node.dont-fallback    = true
+                node.linger           = true
+                target.object         = "@SPEAKER_SINK@"
+            }}
+        }}
+    }}
+]
+"""
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument(
+        "--invert",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="invert woofers (default on: 1 kHz hole is smaller than --no-invert)",
+    )
+    ap.add_argument(
+        "--delay",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="woofer delay of 5 samples (Apple DspDelay; default on: 1 kHz ~flat)",
+    )
+    args = ap.parse_args()
+    invert = bool(args.invert)
+    delay = bool(args.delay)
+
+    d_nodes, d_links, invert_note, delay_note = build_graph(invert, delay, use_limiter=False)
+    DAEMON_OUT.write_text(emit_daemon(d_nodes, d_links, invert_note, delay_note))
+    print("wrote", DAEMON_OUT, "nodes", len(d_nodes), "links", len(d_links))
+
+    o_nodes, o_links, invert_note, delay_note = build_graph(invert, delay, use_limiter=True)
+    HOST_OUT.parent.mkdir(parents=True, exist_ok=True)
+    HOST_OUT.write_text(emit_host(o_nodes, o_links, invert_note, delay_note))
+    print("wrote", HOST_OUT, "nodes", len(o_nodes), "links", len(o_links))
     return 0
 
 

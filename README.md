@@ -27,7 +27,7 @@ DMI product. Esc is the left Touch Bar key, not a separate device.
 | | State | Where |
 | --- | --- | --- |
 | Wi-Fi 5 GHz | works | `firmware/brcm/` |
-| Speakers + mic | works; layout 57 PEQ live | `pipewire/` [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) — davidjo + userspace DSP, not a new kernel driver |
+| Speakers + mic | works; layout 57 host | `pipewire/speaker-tuning/` [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) — davidjo + `cs8409_speakers`, not a new kernel driver |
 | Spotify CEF abort | [#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15) | `string_view::substr` SIGTRAP — app, not CS8409 |
 | FaceTime webcam | works | iBridge UVC `/dev/video0` 1280×720 |
 | Touch Bar Esc + media + F1–F12 | works | `drivers/` + `keyd/` + `systemd/touchbar*` |
@@ -63,20 +63,27 @@ purpose. Loading them at sysinit can hang the box with no login screen.
 
 ## Speakers
 
-Apps see stereo sink `cs8409_speakers`. Hardware is 4ch `analog-surround-40`
-(tweeters `0x02` ch0, woofers `0x03` ch2). Live graph is AppleHDA **layout 57**
-biquads (HPF 80 Hz, 16-band PEQ, tweeter HP 1150+650 Hz, woofer LP 1180+1500 Hz,
-clamp). Woofers inverted + 5-sample delay (tones: 1 kHz vs 500 Hz **−0.7 dB**).
-Raw 4ch node is hidden from the session default. Omarchy volume keys
-(Touch Bar) resolve through the DSP sink to that physical node — do **not**
-lock it at 100%. DSP sink stays at full scale (`cs8409-dsp-unity.service`).
+Apps see stereo sink `cs8409_speakers` (MacBook speakers). Hardware is 4ch
+`analog-surround-40` (tweeters `0x02` ch0, woofers `0x03` ch2). Live graph is
+AppleHDA **layout 57** biquads (HPF 80 Hz, 16-band PEQ, tweeter HP 1150+650 Hz,
+woofer LP 1180+1500 Hz) plus LSP `limiter_stereo` on the 2ch bus and a clamp.
+Woofers inverted + 5-sample delay (host tones: 1 kHz vs 500 Hz **+0.5 dB**). Raw
+4ch node is hidden from the session default. Volume keys (Touch Bar) resolve
+through the DSP sink to that physical node — do **not** lock it at 100%. DSP
+sink stays at full scale (`cs8409-dsp-unity.service`).
+
+The filter runs in its own PipeWire client (`cs8409-speaker-tuning.service`),
+not a daemon drop-in and not Omarchy’s stock `omarchy_speaker_tuning` name.
+That name is Quattro’s protocol for *shipped* laptop tunings; this silicon is
+CS8409 / MAX98706.
 
 Keep **davidjo** for amp/TDM. Do not write a new kernel driver — macOS quality
 is CoreAudio, which this filter clones from `pipewire/applehda/layout57.json`.
 Not a bit-identical clone: Mozart / BuzzKill / ControlFreak / thermal stay
 out (undocumented). Do not commit `AppleHDA.kext`. Do not use `speakersafetyd`
-(MAX98706, no V/ISENSE). Parked 800 Hz LR4: `pipewire/60-cs8409-lr4.conf`.
-Details: [`pipewire/README.md`](pipewire/README.md).
+(MAX98706, no V/ISENSE). Not ArchProAudio (DAW latency) or EasyEffects.
+Parked daemon graph: `pipewire/60-cs8409-crossover.conf`. Details:
+[`pipewire/README.md`](pipewire/README.md).
 
 ## Touch Bar
 

@@ -87,7 +87,8 @@ install_boot() {
 }
 
 install_pipewire() {
-	echo "==> PipeWire CS8409 drop-ins → $USER_HOME"
+	echo "==> PipeWire CS8409 layout 57 host → $USER_HOME"
+	pacman -S --noconfirm --needed lsp-plugins-lv2
 	install -Dm644 "$ROOT/pipewire/cs8409-mixer.service" \
 		"$USER_HOME/.config/systemd/user/macbook-internal-mic.service"
 	install -Dm755 "$ROOT/pipewire/cs8409-dsp-unity-lock.sh" \
@@ -96,8 +97,9 @@ install_pipewire() {
 		"$USER_HOME/.config/systemd/user/cs8409-dsp-unity.service"
 	install -Dm644 "$ROOT/pipewire/pipewire-cs8409.conf" \
 		"$USER_HOME/.config/pipewire/pipewire.conf.d/99-cs8409.conf"
-	install -Dm644 "$ROOT/pipewire/60-cs8409-crossover.conf" \
-		"$USER_HOME/.config/pipewire/pipewire.conf.d/60-cs8409-crossover.conf"
+	# Do not install 60-cs8409-crossover.conf: that daemon drop-in dual-feeds
+	# the 4ch node once the CS8409 host is up. Parked in the repo as rollback.
+	rm -f "$USER_HOME/.config/pipewire/pipewire.conf.d/60-cs8409-crossover.conf"
 	install -d "$USER_HOME/.config/wireplumber/wireplumber.conf.d"
 	install -Dm644 "$ROOT/pipewire/51-cs8409.conf" \
 		"$USER_HOME/.config/wireplumber/wireplumber.conf.d/51-cs8409.conf"
@@ -107,9 +109,9 @@ install_pipewire() {
 		"$USER_HOME/.local/lib/omarchy-macbookpro14-3" \
 		"$USER_HOME/.config/pipewire" \
 		"$USER_HOME/.config/wireplumber/wireplumber.conf.d/51-cs8409.conf"
-	echo "    Then as $USER_NAME: systemctl --user enable --now macbook-internal-mic.service cs8409-dsp-unity.service"
-	echo "    systemctl --user restart pipewire wireplumber"
-	echo "    wpctl set-default the sink named cs8409_speakers"
+	echo "    Then as $USER_NAME:"
+	echo "      $ROOT/pipewire/install-speaker-tuning.sh"
+	echo "      systemctl --user enable --now macbook-internal-mic.service cs8409-dsp-unity.service"
 }
 
 case "$step" in
