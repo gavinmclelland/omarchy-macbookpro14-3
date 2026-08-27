@@ -1,0 +1,14 @@
+[Unit]
+Description=CS8409: lock raw 4ch + PCM at 0 dB
+After=pipewire.service pipewire-pulse.service wireplumber.service
+Wants=pipewire.service pipewire-pulse.service
+PartOf=pipewire.service
+
+[Service]
+Type=exec
+ExecStart=%h/.local/lib/omarchy-macbookpro14-3/cs8409-hw-volume-lock.sh
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target

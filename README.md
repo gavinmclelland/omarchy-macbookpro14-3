@@ -66,7 +66,8 @@ Apps see stereo sink `cs8409_speakers`. Hardware is 4ch `analog-surround-40`
 (tweeters `0x02` ch0, woofers `0x03` ch2). Live graph is AppleHDA **layout 57**
 biquads (HPF 80 Hz, 16-band PEQ, tweeter HP 1150+650 Hz, woofer LP 1180+1500 Hz,
 clamp). Woofers inverted + 5-sample delay (tones: 1 kHz vs 500 Hz **−0.7 dB**).
-Raw 4ch node is hidden at **0 dB**; volume is `cs8409_speakers` only.
+Raw 4ch node is hidden and **locked at 0 dB** (`cs8409-hw-volume.service`).
+Volume is `cs8409_speakers` only.
 
 Keep **davidjo** for amp/TDM. Do not write a new kernel driver — macOS quality
 is CoreAudio, which this filter clones from `pipewire/applehda/layout57.json`.
