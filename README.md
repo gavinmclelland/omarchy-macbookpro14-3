@@ -26,7 +26,7 @@ DMI product. Esc is the left Touch Bar key, not a separate device.
 | | State | Where |
 | --- | --- | --- |
 | Wi-Fi 5 GHz | works | `firmware/brcm/` |
-| Speakers + mic | works (stereo sink → 4ch crossover) | `pipewire/` — confirm it sounds right [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) |
+| Speakers + mic | works; not macOS quality | `pipewire/` [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) — next: AppleHDA PEQ + limiter |
 | Spotify CEF abort | [#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15) | `string_view::substr` SIGTRAP — app, not CS8409 |
 | FaceTime webcam | works | iBridge UVC `/dev/video0` 1280×720 |
 | Touch Bar Esc + media + F1–F12 | works | `drivers/` + `keyd/` + `systemd/touchbar*` |
@@ -59,6 +59,18 @@ live NVRAM file before that reboot.
 
 Touch Bar modules are blacklisted and loaded after `multi-user.target` on
 purpose. Loading them at sysinit can hang the box with no login screen.
+
+## Speakers
+
+Apps see stereo sink `cs8409_speakers`. Hardware is 4ch `analog-surround-40`
+(tweeters `0x02` ch0, woofers `0x03` ch2). LR4 at **800 Hz**, woofers inverted
+(internal-mic sweep: 26 dB hole at 1 kHz without invert). Woofer shelf +2 dB.
+Raw 4ch node is hidden (`priority.session=1`) so Spotify can attach.
+
+This is **not** Apple’s CoreAudio curve. Layout XMLs live on the macOS
+**System** APFS volume (`AppleHDA.kext` `DspEqualization32`). Parser:
+`pipewire/applehda/parse_layout.py`. Do not use `speakersafetyd` (MAX98706, no
+V/ISENSE). Details: [`pipewire/README.md`](pipewire/README.md).
 
 ## Touch Bar
 

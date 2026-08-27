@@ -54,7 +54,7 @@ davidjo CS8409 DKMS. Analog Stereo Duplex. Internal mic unmuted, boost 20 dB. Mi
 7. **Internal-mic sweep (equal digital tones, lid/keyboard mic):** first graph (LR4 1000 Hz, no invert) had a **26 dB hole at 1 kHz** vs 500/1600 Hz — acoustic polarity, classic hollow. Bass 80–315 Hz weak (partly mic HPF). Tweeters peak ~2.5 kHz.
 8. **After invert + LR4 800 Hz:** 1 kHz recovered ~18 dB (hole gone). 800 Hz is now a mild −2 dB vs 500, not a notch. Still treble-tilted (~+5 dB at 2.5 kHz vs 500 Hz).
 
-Linux still lacks Apple’s CoreAudio biquads; this is a 2nd-order 1400 Hz split + woofer invert/shelf, not a macOS clone. User-confirm it sounds right ([#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14)).
+Not a macOS clone. Next: inflate `layoutN.xml.zlib` from the **System** APFS volume (Data mount has no kexts) and map `DspEqualization32` with `pipewire/applehda/parse_layout.py`. Software peak limiter instead of `speakersafetyd`. [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14).
 
 User service: `~/.config/systemd/user/macbook-internal-mic.service` (PCM 100% when it is the hardware max, internal mic unmute). Do **not** force surround-40 from that unit.
 
@@ -166,7 +166,7 @@ nvme0n1p4  231G  LUKS/btrfs        Omarchy
 | [#10](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/10) Wi-Fi Apple MAC | **Reboot** (NVRAM already written) |
 | [#11](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/11) Option EFI Boot | **Reboot**, hold Option |
 | [#12](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/12) suspend/resume | One `systemctl suspend` / lid: TB, ALS, USB-C, Wi-Fi, T1 still `8600` |
-| [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) speaker quality | Graph is live (stereo sink → 4ch). Confirm it sounds right; AppleHDA EQ later |
+| [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) speaker quality | Stereo→4ch live (800 Hz LR4 + invert). AppleHDA PEQ + limiter: mount **System** APFS, not Data |
 | [#2](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/2) Polaris GPU-process FATAL | Chromium mitigated; Spotify CEF still GPU. Per-app `--disable-gpu` or a real Mesa/BAR fix |
 | [#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15) Spotify CEF abort | PID 67730 `substr` trap. PID 9990 (16:43) is #2, not this |
 
