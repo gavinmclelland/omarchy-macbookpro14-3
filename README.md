@@ -65,11 +65,10 @@ purpose. Loading them at sysinit can hang the box with no login screen.
 
 Apps see stereo sink `cs8409_speakers` (MacBook speakers). Hardware is 4ch
 `analog-surround-40` (tweeters `0x02` ch0, woofers `0x03` ch2). Live graph is
-AppleHDA **layout 57** biquads (HPF 80 Hz, 16-band PEQ, tweeter HP 1150+650 Hz,
-woofer LP 1180+1500 Hz) plus a loudness stand-in, 180 Hz body fill (280 Hz dip
-−8 dB, XML −20), LSP `limiter_stereo` on the 2ch bus, and a clamp. Woofers
-inverted + 5-sample delay. 125–280 Hz was a 25–34 dB lid-mic hole; ~28 dB
-louder after the fill. Raw 4ch node is hidden from the session default. Volume keys (Touch Bar) resolve
+AppleHDA **layout 57** in Apple order: HPF 80 Hz, Mozart, Loudness
+(300/2000 Hz), 16-band PEQ, dual-band 400/1250 Hz, +1.5 dB, limiter, then
+tweeter HP 1150+650 / woofer LP 1180+1500, invert, 5-sample delay. Full
+range on this hardware is 80 Hz–16 kHz. Raw 4ch node is hidden from the session default. Volume keys (Touch Bar) resolve
 through the DSP sink to that physical node — do **not** lock it at 100%. DSP
 sink stays at full scale (`cs8409-dsp-unity.service`).
 
@@ -80,7 +79,7 @@ CS8409 / MAX98706.
 
 Keep **davidjo** for amp/TDM. Do not write a new kernel driver — macOS quality
 is CoreAudio, which this filter clones from `pipewire/applehda/layout57.json`.
-Not a bit-identical clone: Mozart / BuzzKill / ControlFreak / thermal stay
+Not a bit-identical clone: BuzzKill / ControlFreak blobs / thermal stay
 out (undocumented). Do not commit `AppleHDA.kext`. Do not use `speakersafetyd`
 (MAX98706, no V/ISENSE). Not ArchProAudio (DAW latency) or EasyEffects.
 Parked daemon graph: `pipewire/60-cs8409-crossover.conf`. Details:

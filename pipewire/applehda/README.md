@@ -42,13 +42,12 @@ Stereo processing, then `Dsp2To4Splitter`:
 | 14 | ThermalSpeakerProtection4ch | Apple thermal model |
 | 15 | 4ChOutput | output trim |
 
-Live graph (`../speaker-tuning/macbookpro14-3/filter-chain.conf`) maps
-0/3/5/6/8/9/10 plus a DspLoudness stand-in (low/high shelf), a 180 Hz body
-fill, 280 Hz dip **−8 dB** (XML is −20), LSP `limiter_stereo` on the 2ch bus,
-and a hard clamp. Hosted by `cs8409-speaker-tuning.service`. Invert **on**,
-woofer delay **5 samples**. 125–280 Hz lid-mic was −25 to −34 dB vs 500 Hz;
-after the fill that band is ~28 dB louder. `param_eq` fan-out left RL/RR
-silent. Not 1/4/11–14 (undocumented Mozart dual / BuzzKill / thermal).
+Live graph (`../speaker-tuning/macbookpro14-3/filter-chain.conf`) is Apple
+order on the 2ch bus: **0 → 1 Mozart → 2 Loudness → 3+5 PEQ (280 Hz XML
+−20 dB) → 4 dual-band → 6 gain → limiter → 7 split → 8/9/10**. Invert **on**,
+woofer delay **5 samples**. Loudness shelves are baked (+4 dB @ 300 Hz,
++3 dB @ 2 kHz); PW 1.6 ignores live biquad Gain. Not 11–14 (BuzzKill /
+ControlFreak blobs / thermal).
 
 ```bash
 python3 render_filter.py

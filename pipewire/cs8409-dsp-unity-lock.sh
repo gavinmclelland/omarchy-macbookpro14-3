@@ -2,6 +2,9 @@
 # Keep the DSP sink at full scale. Omarchy volume keys resolve through it to
 # analog-surround-40 (see omarchy-audio-output-sink). Locking that physical
 # node (or ALSA PCM) freezes the Touch Bar fader.
+#
+# DspLoudness shelves are baked in the host graph (PW 1.6 ignores runtime
+# set-param on filter-chain biquad Gain).
 set -euo pipefail
 DSP=cs8409_speakers
 

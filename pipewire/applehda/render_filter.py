@@ -2,7 +2,8 @@
 """Render PipeWire filter-chain from layout57.json.
 
 Stereo sink → 4ch MAX98706. Builtin bq_* (param_eq dropped RL/RR).
-Not Mozart, BuzzKill, ControlFreak, or thermal.
+Host graph: Mozart + DspLoudness shelves + dual-band + limiter, then split.
+Not BuzzKill / ControlFreak blobs / thermal.
 
     python3 render_filter.py              # both formats (invert + delay on)
     python3 render_filter.py --no-invert
@@ -19,9 +20,66 @@ LAYOUT = Path(__file__).resolve().parent / "layout57.json"
 DAEMON_OUT = ROOT / "60-cs8409-crossover.conf"
 HOST_OUT = ROOT / "speaker-tuning" / "macbookpro14-3" / "filter-chain.conf"
 
+def db_lin(db: float) -> float:
+    return 10.0 ** (db / 20.0)
+
+
+# LSP ports are linear gain. Mozart XML: thr −18 dB, ratio 1.8, makeup +6 dB, 50 ms.
+MOZART = f"""                    {{ type   = lv2
+                      name   = mozart
+                      plugin = "http://lsp-plug.in/plugins/lv2/compressor_stereo"
+                      control = {{
+                          "enabled" = 1
+                          "cm"      = 0
+                          "al"      = {db_lin(-18.0):.6f}
+                          "cr"      = 1.8
+                          "at"      = 20.0
+                          "rt"      = 50.0
+                          "mk"      = {db_lin(6.0):.6f}
+                          "g_in"    = 1.0
+                          "g_out"   = 1.0
+                      }}
+                    }}"""
+
+# Dual-band XML: splits 400 / 1250 Hz, thr −18 / −18 / −24 dB, ratio 4.
+DUAL = f"""                    {{ type   = lv2
+                      name   = dual
+                      plugin = "http://lsp-plug.in/plugins/lv2/mb_compressor_stereo"
+                      control = {{
+                          "enabled" = 1
+                          "mode"    = 0
+                          "cbe_1"   = 1
+                          "sf_1"    = 400.0
+                          "cbe_2"   = 1
+                          "sf_2"    = 1250.0
+                          "cbe_3"   = 0
+                          "cbe_4"   = 0
+                          "cbe_5"   = 0
+                          "cbe_6"   = 0
+                          "cbe_7"   = 0
+                          "ce_0"    = 1
+                          "ce_1"    = 1
+                          "ce_2"    = 1
+                          "al_0"    = {db_lin(-18.0):.6f}
+                          "al_1"    = {db_lin(-18.0):.6f}
+                          "al_2"    = {db_lin(-24.0):.6f}
+                          "cr_0"    = 4.0
+                          "cr_1"    = 4.0
+                          "cr_2"    = 4.0
+                          "at_0"    = 20.0
+                          "at_1"    = 20.0
+                          "at_2"    = 20.0
+                          "rt_0"    = 50.0
+                          "rt_1"    = 50.0
+                          "rt_2"    = 50.0
+                          "mk_0"    = 1.0
+                          "mk_1"    = 1.0
+                          "mk_2"    = 1.0
+                      }}
+                    }}"""
+
 # Dell XPS host uses the same plugin with ALR/boost off so tone does not
-# drift with programme level. g_in 0.5456 ≈ −5.3 dB replaces the daemon's
-# −6 dB pre highshelf. th 0.891 ≈ −1 dBFS.
+# drift with programme level. g_in 0.5456 ≈ −5.3 dB. th 0.891 ≈ −1 dBFS.
 LIMITER = """                    { type   = lv2
                       name   = limiter
                       plugin = "http://lsp-plug.in/plugins/lv2/limiter_stereo"
@@ -115,43 +173,20 @@ def clamp(name: str) -> str:
     )
 
 
-def _soften_body_notch(rows: list[dict]) -> None:
-    """Apple's 280 Hz band is −20 dB. Without DspLoudness/Mozart that is a
-    25–35 dB acoustic hole from 125–280 Hz (hollow, no body). Keep a cabinet
-    dip, restore the rest."""
-    for row in rows:
-        if abs(row["freq"] - 280.0) < 1.0 and row["gain"] < -15.0:
-            row["gain"] = -8.0
-
-
 def build_graph(invert: bool, delay: bool, use_limiter: bool) -> tuple[list[str], list[str], str, str]:
     delay_s = 5.0 / 44100.0
     data = json.loads(LAYOUT.read_text())
     c = chain_by_key(data)
     extra_head = []
-    extra_after_hpf: list[dict] = []
     if not use_limiter:
         extra_head = [{"label": "bq_highshelf", "freq": 0.0, "q": 1.0, "gain": -6.0}]
-    else:
-        # DspLoudness (300 Hz / 2 kHz in the XML) plus a body fill for the
-        # 125–250 Hz acoustic null the lid mic measured at −25 to −34 dB.
-        extra_after_hpf = [
-            {"label": "bq_lowshelf", "freq": 150.0, "q": 0.70, "gain": 4.0},
-            {"label": "bq_peaking", "freq": 180.0, "q": 1.00, "gain": 6.0},
-            {"label": "bq_highshelf", "freq": 6500.0, "q": 0.70, "gain": 2.5},
-        ]
-    pre = rows_from(
-        bands(c["DspFunction0"]),
-        extra_head=extra_head,
-        extra_tail=extra_after_hpf,
-    )
-    rest = rows_from(
+    hpf = rows_from(bands(c["DspFunction0"]), extra_head=extra_head)
+    peq = rows_from(
         bands(c["DspFunction3"]) + bands(c["DspFunction5"]),
-        extra_tail=[{"label": "bq_highshelf", "freq": 0.0, "q": 1.0, "gain": 1.5}],
+        extra_tail=[{"label": "bq_highshelf", "freq": 0.0, "q": 1.0, "gain": 1.5}]
+        if not use_limiter
+        else None,
     )
-    if use_limiter:
-        _soften_body_notch(rest)
-    pre.extend(rest)
     tw = rows_from(bands(c["DspFunction8"]))
     wf = rows_from(bands(c["DspFunction9"]))
 
@@ -166,24 +201,60 @@ def build_graph(invert: bool, delay: bool, use_limiter: bool) -> tuple[list[str]
         clamp("clWfR"),
     ]
     links: list[str] = []
-    if use_limiter:
-        nodes.append(LIMITER)
-
-    n, l, preL_out = series("preL", pre, "copyIL:Out")
-    nodes.extend(n)
-    links.extend(l)
-    n, l, preR_out = series("preR", pre, "copyIR:Out")
-    nodes.extend(n)
-    links.extend(l)
 
     if use_limiter:
+        nodes += [
+            MOZART,
+            # DspLoudness 300/2000 Hz. PipeWire 1.6 ignores runtime
+            # set-param on these Gains, so bake a mid-volume curve (XML scale
+            # is ±6 dB). TB 100% is still the Apple EQ plus this contour.
+            bq_node("loudBassL", {"label": "bq_lowshelf", "freq": 300.0, "q": 0.50, "gain": 4.0}),
+            bq_node("loudBassR", {"label": "bq_lowshelf", "freq": 300.0, "q": 0.50, "gain": 4.0}),
+            bq_node("loudAirL", {"label": "bq_highshelf", "freq": 2000.0, "q": 0.50, "gain": 3.0}),
+            bq_node("loudAirR", {"label": "bq_highshelf", "freq": 2000.0, "q": 0.50, "gain": 3.0}),
+            DUAL,
+            bq_node("gainL", {"label": "bq_highshelf", "freq": 0.0, "q": 1.0, "gain": 1.5}),
+            bq_node("gainR", {"label": "bq_highshelf", "freq": 0.0, "q": 1.0, "gain": 1.5}),
+            LIMITER,
+        ]
+        n, l, hpfL = series("hpfL", hpf, "copyIL:Out")
+        nodes.extend(n)
+        links.extend(l)
+        n, l, hpfR = series("hpfR", hpf, "copyIR:Out")
+        nodes.extend(n)
+        links.extend(l)
         links += [
-            f'                    {{ output = "{preL_out}" input = "limiter:in_l" }}',
-            f'                    {{ output = "{preR_out}" input = "limiter:in_r" }}',
+            f'                    {{ output = "{hpfL}" input = "mozart:in_l" }}',
+            f'                    {{ output = "{hpfR}" input = "mozart:in_r" }}',
+            '                    { output = "mozart:out_l" input = "loudBassL:In" }',
+            '                    { output = "mozart:out_r" input = "loudBassR:In" }',
+            '                    { output = "loudBassL:Out" input = "loudAirL:In" }',
+            '                    { output = "loudBassR:Out" input = "loudAirR:In" }',
+        ]
+        n, l, peqL = series("peqL", peq, "loudAirL:Out")
+        nodes.extend(n)
+        links.extend(l)
+        n, l, peqR = series("peqR", peq, "loudAirR:Out")
+        nodes.extend(n)
+        links.extend(l)
+        links += [
+            f'                    {{ output = "{peqL}" input = "dual:in_l" }}',
+            f'                    {{ output = "{peqR}" input = "dual:in_r" }}',
+            '                    { output = "dual:out_l" input = "gainL:In" }',
+            '                    { output = "dual:out_r" input = "gainR:In" }',
+            '                    { output = "gainL:Out" input = "limiter:in_l" }',
+            '                    { output = "gainR:Out" input = "limiter:in_r" }',
             '                    { output = "limiter:out_l" input = "splitL:In" }',
             '                    { output = "limiter:out_r" input = "splitR:In" }',
         ]
     else:
+        pre = hpf + peq
+        n, l, preL_out = series("preL", pre, "copyIL:Out")
+        nodes.extend(n)
+        links.extend(l)
+        n, l, preR_out = series("preR", pre, "copyIR:Out")
+        nodes.extend(n)
+        links.extend(l)
         links += [
             f'                    {{ output = "{preL_out}" input = "splitL:In" }}',
             f'                    {{ output = "{preR_out}" input = "splitR:In" }}',
@@ -321,9 +392,11 @@ def emit_host(nodes: list[str], links: list[str], invert_note: str, delay_note: 
 # Do not edit by hand. Hosted by pipewire -c cs8409-speaker-tuning.conf.
 #
 # Keep davidjo for amp/TDM. Builtin bq_* (param_eq dropped RL/RR).
-# Not Mozart / BuzzKill / ControlFreak / thermal.
-# LSP limiter_stereo on the 2ch bus (alr/boost off); clamp ±0.98 after split.
-# Loudness shelves + 180 Hz body fill; 280 Hz cabinet dip kept at −8 dB (was −20).
+# Apple order on the 2ch bus: HPF → Mozart → Loudness shelves (300/2000 Hz,
+# +4/+3 dB mid-curve; PW 1.6 cannot retune Gain live) → layout 57 PEQ
+# (280 Hz XML −20 dB) → dual-band → +1.5 dB → limiter. Then split / invert
+# / delay / clamp.
+# Not BuzzKill / thermal.
 # {invert_note} {delay_note}
 # install.sh substitutes @SPEAKER_SINK@ from sink_pattern.
 context.modules = [
