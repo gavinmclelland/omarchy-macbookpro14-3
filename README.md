@@ -26,7 +26,7 @@ DMI product. Esc is the left Touch Bar key, not a separate device.
 | | State | Where |
 | --- | --- | --- |
 | Wi-Fi 5 GHz | works | `firmware/brcm/` |
-| Speakers + mic | works; not macOS quality | `pipewire/` [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) — layout **57** distilled; PEQ+limiter not in the live graph yet |
+| Speakers + mic | works; layout 57 PEQ live | `pipewire/` [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) — davidjo + userspace DSP, not a new kernel driver |
 | Spotify CEF abort | [#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15) | `string_view::substr` SIGTRAP — app, not CS8409 |
 | FaceTime webcam | works | iBridge UVC `/dev/video0` 1280×720 |
 | Touch Bar Esc + media + F1–F12 | works | `drivers/` + `keyd/` + `systemd/touchbar*` |
@@ -63,17 +63,17 @@ purpose. Loading them at sysinit can hang the box with no login screen.
 ## Speakers
 
 Apps see stereo sink `cs8409_speakers`. Hardware is 4ch `analog-surround-40`
-(tweeters `0x02` ch0, woofers `0x03` ch2). LR4 at **800 Hz**, woofers inverted
-(internal-mic sweep: 26 dB hole at 1 kHz without invert). Woofer shelf +2 dB.
-Raw 4ch node is hidden (`priority.session=1`) so Spotify can attach.
+(tweeters `0x02` ch0, woofers `0x03` ch2). Live graph is AppleHDA **layout 57**
+biquads (HPF 80 Hz, 16-band PEQ, tweeter HP 1150+650 Hz, woofer LP 1180+1500 Hz,
+clamp). Woofers inverted (mic sweep: 26 dB hole at 1 kHz without invert). Raw
+4ch node is hidden (`priority.session=1`) so Spotify can attach.
 
-This is **not** Apple’s CoreAudio curve. Distilled from this machine’s
-AppleHDA **layout 57** (MAX98706, GTK/Merry share one chain):
-`pipewire/applehda/layout57.json`. Apple splits after a stereo PEQ with tweeter
-HP 1150+650 Hz and woofer LP 1180+1500 Hz. Parser:
-`pipewire/applehda/parse_layout.py`. Do not commit `AppleHDA.kext`. Do not use
-`speakersafetyd` (MAX98706, no V/ISENSE). Details:
-[`pipewire/README.md`](pipewire/README.md).
+Keep **davidjo** for amp/TDM. Do not write a new kernel driver — macOS quality
+is CoreAudio, which this filter clones from `pipewire/applehda/layout57.json`.
+Not a bit-identical clone: Mozart / BuzzKill / ControlFreak / thermal stay
+out (undocumented). Do not commit `AppleHDA.kext`. Do not use `speakersafetyd`
+(MAX98706, no V/ISENSE). Parked 800 Hz LR4: `pipewire/60-cs8409-lr4.conf`.
+Details: [`pipewire/README.md`](pipewire/README.md).
 
 ## Touch Bar
 

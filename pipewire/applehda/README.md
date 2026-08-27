@@ -42,8 +42,14 @@ Stereo processing, then `Dsp2To4Splitter`:
 | 14 | ThermalSpeakerProtection4ch | Apple thermal model |
 | 15 | 4ChOutput | output trim |
 
-The live PipeWire graph is still the measured LR4 **800 Hz** crossover, not
-this chain. Next: map 0/5/8/9 (+ a software peak limiter for 12–14) onto
-`cs8409_speakers`. Do **not** use `speakersafetyd` (MAX98706 has no V/ISENSE).
+Live graph (`../60-cs8409-crossover.conf`) maps 0/3/5/6/8/9 plus a hard
+clamp. Not 1/2/4/11–14 (undocumented). `render_filter.py` rebuilds the conf:
+
+```bash
+python3 render_filter.py
+```
+
+Do **not** write a new kernel driver. Do **not** use `speakersafetyd`
+(MAX98706 has no V/ISENSE).
 
 Filter types: 0 low-pass, 1 high-pass, 4 bell, 6 notch.

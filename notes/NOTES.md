@@ -54,7 +54,7 @@ davidjo CS8409 DKMS. Analog Stereo Duplex. Internal mic unmuted, boost 20 dB. Mi
 7. **Internal-mic sweep (equal digital tones, lid/keyboard mic):** first graph (LR4 1000 Hz, no invert) had a **26 dB hole at 1 kHz** vs 500/1600 Hz — acoustic polarity, classic hollow. Bass 80–315 Hz weak (partly mic HPF). Tweeters peak ~2.5 kHz.
 8. **After invert + LR4 800 Hz:** 1 kHz recovered ~18 dB (hole gone). 800 Hz is now a mild −2 dB vs 500, not a notch. Still treble-tilted (~+5 dB at 2.5 kHz vs 500 Hz).
 
-Not a macOS clone. **Layout 57** is this machine (CS8409 + four MAX98706). GTK and Merry share one SoftwareDSP chain. Distilled: `pipewire/applehda/layout57.json`. Apple’s split is tweeter HP 1150+650 Hz / woofer LP 1180+1500 Hz after a 16-band stereo PEQ; not our live 800 Hz LR4. TAS5764L layouts 14/15 are a different product — ignore them here. Software peak limiter instead of `speakersafetyd` (no V/ISENSE). Do not commit `AppleHDA.kext`. [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14).
+**Layout 57 DSP is live** (not a new kernel driver). Keep davidjo for amp/TDM. Userspace filter from `pipewire/applehda/layout57.json`: HPF 80, stereo PEQ, tweeter HP 1150+650, woofer LP 1180+1500, −6 dB headroom, +1.5 dB Apple gain, clamp ±0.98, woofer invert. Not Mozart / BuzzKill / ControlFreak / thermal. Parked 800 Hz LR4: `pipewire/60-cs8409-lr4.conf`. TAS5764L layouts 14/15 are a different product. No `speakersafetyd`. Do not commit `AppleHDA.kext`. [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14).
 
 User service: `~/.config/systemd/user/macbook-internal-mic.service` (PCM 100% when it is the hardware max, internal mic unmute). Do **not** force surround-40 from that unit.
 
@@ -166,7 +166,7 @@ nvme0n1p4  231G  LUKS/btrfs        Omarchy
 | [#10](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/10) Wi-Fi Apple MAC | **Reboot** (NVRAM already written) |
 | [#11](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/11) Option EFI Boot | **Reboot**, hold Option |
 | [#12](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/12) suspend/resume | One `systemctl suspend` / lid: TB, ALS, USB-C, Wi-Fi, T1 still `8600` |
-| [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) speaker quality | Stereo→4ch live (800 Hz LR4 + invert). Layout **57** distilled. Next: PEQ + limiter on `cs8409_speakers` |
+| [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) speaker quality | Layout 57 PEQ+split+clamp live. Listen; parked LR4 if it is worse |
 | [#2](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/2) Polaris GPU-process FATAL | Chromium mitigated; Spotify CEF still GPU. Per-app `--disable-gpu` or a real Mesa/BAR fix |
 | [#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15) Spotify CEF abort | PID 67730 `substr` trap. PID 9990 (16:43) is #2, not this |
 
