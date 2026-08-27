@@ -6,14 +6,15 @@ PartOf=pipewire.service
 
 [Service]
 Type=oneshot
+RemainAfterExit=yes
 # Keep ALSA PCM at 0 dB; PipeWire/OSD is the only volume fader.
 # PCM at 25% (-38 dB) under a 23% sink made speakers thin and quiet.
 ExecStart=/usr/bin/amixer -q -c PCH set PCM 100%
 ExecStart=/usr/bin/amixer -q -c PCH set "Internal Mic" cap unmute 100%
 ExecStart=/usr/bin/amixer -q -c PCH set "Internal Mic Boost" 100%
 ExecStart=/usr/bin/wpctl set-mute @DEFAULT_AUDIO_SOURCE@ 0
-# Hardware 4ch sink must stay at 0 dB. App volume lives on cs8409_speakers only.
-ExecStart=/usr/bin/pactl set-sink-volume alsa_output.pci-0000_00_1f.3.analog-surround-40 100%
+# Hardware 4ch must stay 0 dB. WirePlumber restores the route a moment later.
+ExecStart=/bin/sh -c 'for i in 1 2 3 4; do pactl set-sink-volume alsa_output.pci-0000_00_1f.3.analog-surround-40 100%; sleep 1; done'
 
 [Install]
 WantedBy=default.target

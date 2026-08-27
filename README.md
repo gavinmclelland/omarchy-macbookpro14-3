@@ -65,8 +65,8 @@ purpose. Loading them at sysinit can hang the box with no login screen.
 Apps see stereo sink `cs8409_speakers`. Hardware is 4ch `analog-surround-40`
 (tweeters `0x02` ch0, woofers `0x03` ch2). Live graph is AppleHDA **layout 57**
 biquads (HPF 80 Hz, 16-band PEQ, tweeter HP 1150+650 Hz, woofer LP 1180+1500 Hz,
-clamp). Woofers inverted (mic sweep: 26 dB hole at 1 kHz without invert). Raw
-4ch node is hidden (`priority.session=1`) so Spotify can attach.
+clamp). Woofers inverted (tones: 1 kHz vs 500 Hz is −4 dB with invert, −10 dB
+without). Raw 4ch node is hidden at **0 dB**; volume is `cs8409_speakers` only.
 
 Keep **davidjo** for amp/TDM. Do not write a new kernel driver — macOS quality
 is CoreAudio, which this filter clones from `pipewire/applehda/layout57.json`.

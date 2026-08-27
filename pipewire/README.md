@@ -10,8 +10,10 @@ Apps see a **stereo** sink `cs8409_speakers`. Playback is 4ch onto analog-surrou
 - FL/FR → tweeter DAC `0x02` ch0 (HP 1150 Hz + HP 650 Hz + tweeter PEQ)
 - RL/RR → woofer DAC `0x03` ch2 (LP 1180 Hz + LP 1500 Hz + woofer PEQ, invert)
 - Peak clamp ±0.98 (stand-in for ControlFreak / thermal)
+- Hardware 4ch locked at 0 dB (`cs8409-mixer.service` retries after WirePlumber restore)
 
-Internal mic sweep: without invert, **26 dB hole at 1 kHz**. Invert stays.
+Tones (layout 57): invert **on** → 1 kHz is −4 dB vs 500 Hz; invert off → −10 dB.
+Keep invert. Lodi Dodi’s 1 kHz dip on the mic was the mix, not a 26 dB polarity null.
 
 WirePlumber keeps the raw 4ch node at `priority.session=1` so Spotify/Chromium never pick it. Default sink is `cs8409_speakers`.
 

@@ -43,11 +43,14 @@ Stereo processing, then `Dsp2To4Splitter`:
 | 15 | 4ChOutput | output trim |
 
 Live graph (`../60-cs8409-crossover.conf`) maps 0/3/5/6/8/9 plus a hard
-clamp as chained `bq_*` nodes. `param_eq` fan-out left RL/RR silent. Not
-1/2/4/11–14 (undocumented). `render_filter.py` rebuilds the conf:
+clamp as chained `bq_*` nodes. Woofer invert **on** (tones: 1 kHz −4 dB vs
+500 Hz; `--no-invert` is −10 dB). `param_eq` fan-out left RL/RR silent. Not
+1/2/4/11–14 (undocumented). Five-sample `DspDelay` not applied yet.
 
 ```bash
-python3 render_filter.py
+python3 render_filter.py          # invert on
+python3 render_filter.py --no-invert
+python3 measure_crossover.py
 ```
 
 Do **not** write a new kernel driver. Do **not** use `speakersafetyd`

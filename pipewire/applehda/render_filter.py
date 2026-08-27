@@ -4,10 +4,13 @@
 Stereo sink cs8409_speakers → 4ch analog-surround-40.
 Uses builtin bq_* nodes (param_eq In 2 / fan-out dropped the woofers).
 Not Mozart, BuzzKill, ControlFreak, or thermal. Clamp is the limiter.
-Woofer invert is from the mic sweep, not Apple XML.
+
+    python3 render_filter.py            # invert on (flatter 1 kHz on this cabinet)
+    python3 render_filter.py --no-invert
 """
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 
@@ -98,6 +101,16 @@ def clamp(name: str) -> str:
 
 
 def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument(
+        "--invert",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="invert woofers (default on: 1 kHz hole is smaller than --no-invert)",
+    )
+    args = ap.parse_args()
+    invert = bool(args.invert)
+
     data = json.loads(LAYOUT.read_text())
     c = chain_by_key(data)
     pre = rows_from(
@@ -113,8 +126,6 @@ def main() -> int:
         "                    { name = copyIR type = builtin label = copy }",
         "                    { name = splitL type = builtin label = copy }",
         "                    { name = splitR type = builtin label = copy }",
-        "                    { name = invL type = builtin label = invert }",
-        "                    { name = invR type = builtin label = invert }",
         clamp("clTwL"),
         clamp("clTwR"),
         clamp("clWfL"),
@@ -146,14 +157,30 @@ def main() -> int:
     nodes.extend(n)
     links.extend(l)
 
+    if invert:
+        nodes += [
+            "                    { name = invL type = builtin label = invert }",
+            "                    { name = invR type = builtin label = invert }",
+        ]
+        wfL_to_clamp = [
+            f'                    {{ output = "{wfL_out}" input = "invL:In" }}',
+            f'                    {{ output = "{wfR_out}" input = "invR:In" }}',
+            '                    { output = "invL:Out" input = "clWfL:In" }',
+            '                    { output = "invR:Out" input = "clWfR:In" }',
+        ]
+        invert_note = "Woofer invert ON (LR4-era acoustic)."
+    else:
+        wfL_to_clamp = [
+            f'                    {{ output = "{wfL_out}" input = "clWfL:In" }}',
+            f'                    {{ output = "{wfR_out}" input = "clWfR:In" }}',
+        ]
+        invert_note = "Woofer invert OFF (Apple staggered HP/LP; measure 1 kHz)."
+
     links += [
         f'                    {{ output = "{twL_out}" input = "clTwL:In" }}',
         f'                    {{ output = "{twR_out}" input = "clTwR:In" }}',
-        f'                    {{ output = "{wfL_out}" input = "invL:In" }}',
-        f'                    {{ output = "{wfR_out}" input = "invR:In" }}',
-        '                    { output = "invL:Out" input = "clWfL:In" }',
-        '                    { output = "invR:Out" input = "clWfR:In" }',
     ]
+    links += wfL_to_clamp
 
     # series() already linked copyIL→preL0; drop the duplicate we skipped.
 
@@ -162,7 +189,7 @@ def main() -> int:
 #
 # Keep davidjo for amp/TDM. Builtin bq_* (param_eq dropped RL/RR).
 # Not Mozart / BuzzKill / ControlFreak / thermal. Clamp is the limiter.
-# Woofer invert: internal-mic sweep (26 dB hole at 1 kHz without it).
+# {invert_note}
 # Parked 800 Hz LR4: 60-cs8409-lr4.conf
 context.modules = [
     {{ name = libpipewire-module-filter-chain
