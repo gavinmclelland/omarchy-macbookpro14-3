@@ -1,9 +1,10 @@
-# Omarchy on MacBookPro14,3 (T1)
+# Omarchy on MacBookPro14,3 (A1707 / T1)
 
-Platform overlay for this 15-inch 2017 Touch Bar Mac. **Make it work,
-then make it better.** Issues are the source of truth.
+Platform overlay for this 15-inch 2017 Touch Bar Mac (**A1707**). **Make it
+work, then make it better.** Issues are the source of truth.
 
-T1 must stay `05ac:8600`, never recovery `1281`. Do not install T2 packages
+T1 must stay `05ac:8600`, never recovery `1281`. T1 is iBridge (TB / cam /
+ALS / Touch ID), not the audio silicon. Do not install T2 packages
 (`tiny-dfr`, `linux-t2`).
 
 This tree is a **machine overlay**: files classified by Linux layer, for one
@@ -17,7 +18,7 @@ DMI product. Esc is the left Touch Bar key, not a separate device.
 | SPI APP000D | keys, pad, kbd light | mainline `applespi` + `keyd/` |
 | PCI BCM43602 | Wi-Fi | `firmware/brcm/` |
 | UART BCM20703 | BT | kernel ROM — no `.hcd` |
-| PCI CS8409 | 4 speakers + mics | `scripts/install-cs8409-dkms.sh` `pipewire/` |
+| PCI CS8409 + CS42L83 / MAX98706 | 4 speakers + mics | `scripts/install-cs8409-dkms.sh` `pipewire/` |
 | Apple NVMe + xHCI | disk, USB-C | `systemd/nvme-d3cold.service` `boot/` |
 | gmux + amdgpu | panel | mainline |
 

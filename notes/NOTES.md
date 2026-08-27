@@ -1,8 +1,8 @@
 # Work notes — MacBookPro14,3 on Omarchy
 
-Machine: **MacBookPro14,3** (15-inch 2017 Touch Bar), hostname `omabook-pro`.  
+Machine: **MacBookPro14,3** / **A1707** (15-inch 2017 Touch Bar), hostname `omabook-pro`.  
 OS: Omarchy 4.0.1, kernel **7.1.9-arch1-2**.  
-T1: **`05ac:8600` iBridge** (must not be recovery `05ac:1281`).  
+T1: **`05ac:8600` iBridge** (must not be recovery `05ac:1281`). T1 is not the audio silicon.  
 Repo: this tree is a **platform overlay** (`drivers/` `firmware/` `systemd/` `keyd/` `pipewire/` `boot/`), not symptom folders. Issues are the tracker. Do not install T2 packages (`tiny-dfr`, `linux-t2`). Esc is the left Touch Bar key; `Fn+\`` in `keyd/` is backup.
 
 Written 2026-08-25–26. This is what actually landed on the laptop, including failed experiments.
@@ -17,13 +17,13 @@ Written 2026-08-25–26. This is what actually landed on the laptop, including f
 | Wi-Fi | BCM43602 `brcmfmac`, iface `wlp3s0` |
 | Bluetooth | UART BCM20703A2, `hci0` from ROM |
 | GPU | AMD Polaris11 Radeon Pro 560 `amdgpu` `renderD128` drives `eDP-1` 2880×1800 @1.6 scale; Intel HD 630 `i915` `renderD129` usually runtime-suspended via `apple_gmux` |
-| Audio | CS8409/CS42L83 on HDA PCH (`0x106b3900`), DKMS `snd_hda_macbookpro` / `snd_hda_codec_cs8409` |
+| Audio | CS8409 `0x10138409` + CS42L83 + four MAX98706 on HDA PCH (`0x106b3900`). Layout 57. DKMS `snd_hda_macbookpro` / `snd_hda_codec_cs8409` |
 | NVMe | Samsung `0000:02:00.0`, `d3cold_allowed=0` |
 | Keyboard/trackpad | mainline `applespi`; kbd backlight `spi::kbd_backlight` |
 | Display brightness | `gmux_backlight` |
 | Sleep | `/sys/power/mem_sleep` is `s2idle [deep]` — current mode **deep**, never tested this boot |
 
-Four T1 functions share the iBridge: Touch Bar, FaceTime webcam, Touch ID (no Linux driver), ALS.
+Four T1 functions share the iBridge: Touch Bar, FaceTime webcam, Touch ID (no Linux driver), ALS. Speakers and mics are CS8409/CS42L83 + MAX98706, not the T1.
 
 No iBridge die temperature is exposed. Closest skin sensors (`Ts0P`/`Ts1P`) were ~30–32 °C while CPU ~78–81 °C and GPU edge ~64 °C.
 
@@ -166,7 +166,7 @@ nvme0n1p4  231G  LUKS/btrfs        Omarchy
 | [#10](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/10) Wi-Fi Apple MAC | **Reboot** (NVRAM already written) |
 | [#11](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/11) Option EFI Boot | **Reboot**, hold Option |
 | [#12](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/12) suspend/resume | One `systemctl suspend` / lid: TB, ALS, USB-C, Wi-Fi, T1 still `8600` |
-| [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) speaker quality | Layout 57 + invert + delay. 4ch locked 0 dB (subscribe). Mozart not cloned |
+| [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) speaker quality | Layout 57 + invert + delay. DSP unity; TB volume is physical 4ch |
 | [#2](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/2) Polaris GPU-process FATAL | Chromium mitigated; Spotify CEF still GPU. Per-app `--disable-gpu` or a real Mesa/BAR fix |
 | [#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15) Spotify CEF abort | PID 67730 `substr` trap. PID 9990 (16:43) is #2, not this |
 

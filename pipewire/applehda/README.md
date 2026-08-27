@@ -4,7 +4,7 @@ Source: this machine’s macOS `AppleHDA.kext/Contents/Resources/layoutN.xml.zli
 on the **System** APFS volume (not the Data volume). **Do not commit the kext
 or the zlib files.**
 
-## MacBookPro14,3 is layout 57
+## MacBookPro14,3 (A1707) is layout 57
 
 | | |
 | --- | --- |
