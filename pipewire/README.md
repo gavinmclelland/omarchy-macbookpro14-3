@@ -7,7 +7,7 @@ Speakers work. Mic is quiet (same as macOS).
 Apps see stereo sink **`cs8409_speakers`** (description: MacBook speakers).
 Playback is 4ch onto analog-surround-40:
 
-- Stereo, Apple order: HPF 80 Hz → Mozart compressor (−18 dB / 1.8 / +6 dB) → Loudness shelves 300 Hz +4 / 2 kHz +3 → layout 57 PEQ (280 Hz **−20 dB** XML) → dual-band 400/1250 Hz → +1.5 dB → limiter
+- Stereo, Apple order: HPF 80 Hz → Mozart (−18 dB / 1.8 / +3 dB makeup) → Loudness 300 Hz +4 / **6.5 kHz +2** (not 2 kHz) → PEQ (280 Hz −20 dB XML; **1550 Hz +8** not +13) → dual-band (mid ratio 1.8) → limiter
 - FL/FR → tweeter DAC `0x02` ch0 (HP 1150 Hz + HP 650 Hz + tweeter PEQ)
 - RL/RR → woofer DAC `0x03` ch2 (LP 1180 Hz + LP 1500 Hz + woofer PEQ, invert, delay 5 samples)
 - Peak clamp ±0.98 (stand-in for ControlFreak / thermal)

@@ -45,9 +45,9 @@ Stereo processing, then `Dsp2To4Splitter`:
 Live graph (`../speaker-tuning/macbookpro14-3/filter-chain.conf`) is Apple
 order on the 2ch bus: **0 → 1 Mozart → 2 Loudness → 3+5 PEQ (280 Hz XML
 −20 dB) → 4 dual-band → 6 gain → limiter → 7 split → 8/9/10**. Invert **on**,
-woofer delay **5 samples**. Loudness shelves are baked (+4 dB @ 300 Hz,
-+3 dB @ 2 kHz); PW 1.6 ignores live biquad Gain. Not 11–14 (BuzzKill /
-ControlFreak blobs / thermal).
+woofer delay **5 samples**. Loudness: +4 dB @ 300 Hz, **+2 dB @ 6.5 kHz**
+(a 2 kHz Q=0.5 shelf plus XML +13 @ 1550 Hz sounded nasal). 1550 Hz is
+**+8 dB**. Mozart makeup +3 dB. Dual-band mid ratio 1.8. Not 11–14.
 
 ```bash
 python3 render_filter.py

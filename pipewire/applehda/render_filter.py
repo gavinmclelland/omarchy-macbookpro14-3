@@ -35,7 +35,7 @@ MOZART = f"""                    {{ type   = lv2
                           "cr"      = 1.8
                           "at"      = 20.0
                           "rt"      = 50.0
-                          "mk"      = {db_lin(6.0):.6f}
+                          "mk"      = {db_lin(3.0):.6f}
                           "g_in"    = 1.0
                           "g_out"   = 1.0
                       }}
@@ -64,7 +64,7 @@ DUAL = f"""                    {{ type   = lv2
                           "al_1"    = {db_lin(-18.0):.6f}
                           "al_2"    = {db_lin(-24.0):.6f}
                           "cr_0"    = 4.0
-                          "cr_1"    = 4.0
+                          "cr_1"    = 1.8
                           "cr_2"    = 4.0
                           "at_0"    = 20.0
                           "at_1"    = 20.0
@@ -187,6 +187,12 @@ def build_graph(invert: bool, delay: bool, use_limiter: bool) -> tuple[list[str]
         if not use_limiter
         else None,
     )
+    if use_limiter:
+        # Apple +13 dB @ 1550 Hz Q≈1.1 is a wide presence bump. With Mozart
+        # makeup it reads as congested / nasal on voices. Keep a bump, not 13.
+        for row in peq:
+            if abs(row["freq"] - 1550.0) < 20.0 and row["gain"] > 8.0:
+                row["gain"] = 8.0
     tw = rows_from(bands(c["DspFunction8"]))
     wf = rows_from(bands(c["DspFunction9"]))
 
@@ -205,13 +211,13 @@ def build_graph(invert: bool, delay: bool, use_limiter: bool) -> tuple[list[str]
     if use_limiter:
         nodes += [
             MOZART,
-            # DspLoudness 300/2000 Hz. PipeWire 1.6 ignores runtime
-            # set-param on these Gains, so bake a mid-volume curve (XML scale
-            # is ±6 dB). TB 100% is still the Apple EQ plus this contour.
+            # DspLoudness: bass shelf stays at 300 Hz. Air is 6.5 kHz, not
+            # 2 kHz — a Q=0.5 highshelf at 2 kHz plus Apple’s +13 dB @ 1550 Hz
+            # is a stuffed-nose / nasal vocal. PW 1.6 cannot retune Gain live.
             bq_node("loudBassL", {"label": "bq_lowshelf", "freq": 300.0, "q": 0.50, "gain": 4.0}),
             bq_node("loudBassR", {"label": "bq_lowshelf", "freq": 300.0, "q": 0.50, "gain": 4.0}),
-            bq_node("loudAirL", {"label": "bq_highshelf", "freq": 2000.0, "q": 0.50, "gain": 3.0}),
-            bq_node("loudAirR", {"label": "bq_highshelf", "freq": 2000.0, "q": 0.50, "gain": 3.0}),
+            bq_node("loudAirL", {"label": "bq_highshelf", "freq": 6500.0, "q": 0.70, "gain": 2.0}),
+            bq_node("loudAirR", {"label": "bq_highshelf", "freq": 6500.0, "q": 0.70, "gain": 2.0}),
             DUAL,
             bq_node("gainL", {"label": "bq_highshelf", "freq": 0.0, "q": 1.0, "gain": 1.5}),
             bq_node("gainR", {"label": "bq_highshelf", "freq": 0.0, "q": 1.0, "gain": 1.5}),
@@ -392,10 +398,9 @@ def emit_host(nodes: list[str], links: list[str], invert_note: str, delay_note: 
 # Do not edit by hand. Hosted by pipewire -c cs8409-speaker-tuning.conf.
 #
 # Keep davidjo for amp/TDM. Builtin bq_* (param_eq dropped RL/RR).
-# Apple order on the 2ch bus: HPF → Mozart → Loudness shelves (300/2000 Hz,
-# +4/+3 dB mid-curve; PW 1.6 cannot retune Gain live) → layout 57 PEQ
-# (280 Hz XML −20 dB) → dual-band → +1.5 dB → limiter. Then split / invert
-# / delay / clamp.
+# Apple order on the 2ch bus: HPF → Mozart → Loudness (300 Hz bass / 6.5 kHz
+# air) → layout 57 PEQ (280 Hz XML −20 dB; 1550 Hz +8 not +13) → dual-band
+# (mid ratio 1.8) → +1.5 dB → limiter. Then split / invert / delay / clamp.
 # Not BuzzKill / thermal.
 # {invert_note} {delay_note}
 # install.sh substitutes @SPEAKER_SINK@ from sink_pattern.
