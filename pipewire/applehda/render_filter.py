@@ -193,6 +193,9 @@ def build_graph(invert: bool, delay: bool, use_limiter: bool) -> tuple[list[str]
         for row in peq:
             if abs(row["freq"] - 1550.0) < 20.0 and row["gain"] > 8.0:
                 row["gain"] = 8.0
+        # Lid-mic vs electrical on Mastering The Mix refs: speakers add
+        # ~20 dB of 700–1200 Hz vs 160–350 Hz. A modest 1 kHz cut.
+        peq.append({"label": "bq_peaking", "freq": 1050.0, "q": 1.20, "gain": -3.0})
     tw = rows_from(bands(c["DspFunction8"]))
     wf = rows_from(bands(c["DspFunction9"]))
 
