@@ -90,10 +90,10 @@ install_pipewire() {
 	echo "==> PipeWire CS8409 drop-ins → $USER_HOME"
 	install -Dm644 "$ROOT/pipewire/cs8409-mixer.service" \
 		"$USER_HOME/.config/systemd/user/macbook-internal-mic.service"
-	install -Dm755 "$ROOT/pipewire/cs8409-hw-volume-lock.sh" \
-		"$USER_HOME/.local/lib/omarchy-macbookpro14-3/cs8409-hw-volume-lock.sh"
-	install -Dm644 "$ROOT/pipewire/cs8409-hw-volume.service" \
-		"$USER_HOME/.config/systemd/user/cs8409-hw-volume.service"
+	install -Dm755 "$ROOT/pipewire/cs8409-dsp-unity-lock.sh" \
+		"$USER_HOME/.local/lib/omarchy-macbookpro14-3/cs8409-dsp-unity-lock.sh"
+	install -Dm644 "$ROOT/pipewire/cs8409-dsp-unity.service" \
+		"$USER_HOME/.config/systemd/user/cs8409-dsp-unity.service"
 	install -Dm644 "$ROOT/pipewire/pipewire-cs8409.conf" \
 		"$USER_HOME/.config/pipewire/pipewire.conf.d/99-cs8409.conf"
 	install -Dm644 "$ROOT/pipewire/60-cs8409-crossover.conf" \
@@ -103,11 +103,11 @@ install_pipewire() {
 		"$USER_HOME/.config/wireplumber/wireplumber.conf.d/51-cs8409.conf"
 	chown -R "$USER_NAME:$USER_NAME" \
 		"$USER_HOME/.config/systemd/user/macbook-internal-mic.service" \
-		"$USER_HOME/.config/systemd/user/cs8409-hw-volume.service" \
+		"$USER_HOME/.config/systemd/user/cs8409-dsp-unity.service" \
 		"$USER_HOME/.local/lib/omarchy-macbookpro14-3" \
 		"$USER_HOME/.config/pipewire" \
 		"$USER_HOME/.config/wireplumber/wireplumber.conf.d/51-cs8409.conf"
-	echo "    Then as $USER_NAME: systemctl --user enable --now macbook-internal-mic.service cs8409-hw-volume.service"
+	echo "    Then as $USER_NAME: systemctl --user enable --now macbook-internal-mic.service cs8409-dsp-unity.service"
 	echo "    systemctl --user restart pipewire wireplumber"
 	echo "    wpctl set-default the sink named cs8409_speakers"
 }

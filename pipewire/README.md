@@ -10,7 +10,7 @@ Apps see a **stereo** sink `cs8409_speakers`. Playback is 4ch onto analog-surrou
 - FL/FR → tweeter DAC `0x02` ch0 (HP 1150 Hz + HP 650 Hz + tweeter PEQ)
 - RL/RR → woofer DAC `0x03` ch2 (LP 1180 Hz + LP 1500 Hz + woofer PEQ, invert, delay 5 samples)
 - Peak clamp ±0.98 (stand-in for ControlFreak / thermal)
-- Hardware 4ch locked at 0 dB (`cs8409-hw-volume.service` watches `pactl subscribe`; ACP copies route volume onto PCM)
+- DSP sink `cs8409_speakers` locked at 0 dB (full scale into the PEQ). Touch Bar volume is the physical 4ch node (`omarchy-audio-output-sink` walks through the filter). Do not lock analog-surround-40 / PCM.
 
 Tones (layout 57, lid mic vs 500 Hz): invert off −10 dB at 1 kHz; invert on −4 dB;
 invert + 5-sample woofer delay **−0.7 dB**. Keep invert + delay. 280 Hz scoop is Apple.

@@ -1,12 +1,12 @@
 [Unit]
-Description=CS8409: lock raw 4ch + PCM at 0 dB
+Description=CS8409: keep DSP sink at 0 dB (TB volume is the 4ch node)
 After=pipewire.service pipewire-pulse.service wireplumber.service
 Wants=pipewire.service pipewire-pulse.service
 PartOf=pipewire.service
 
 [Service]
 Type=exec
-ExecStart=%h/.local/lib/omarchy-macbookpro14-3/cs8409-hw-volume-lock.sh
+ExecStart=%h/.local/lib/omarchy-macbookpro14-3/cs8409-dsp-unity-lock.sh
 Restart=on-failure
 RestartSec=2
 
