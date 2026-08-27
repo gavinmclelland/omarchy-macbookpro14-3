@@ -1,0 +1,18 @@
+[Unit]
+Description=CS8409 layout 57 speaker filter-chain
+# WirePlumber does the linking; start after it so analog-surround-40 exists.
+After=pipewire.service wireplumber.service
+Requires=pipewire.service
+Wants=wireplumber.service
+PartOf=pipewire.service
+
+[Service]
+Type=simple
+# Separate PipeWire client, not a daemon drop-in. A bad graph kills this
+# unit only. Switching it does not drop Pulse clients (Spotify).
+ExecStart=/usr/bin/pipewire -c cs8409-speaker-tuning.conf
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

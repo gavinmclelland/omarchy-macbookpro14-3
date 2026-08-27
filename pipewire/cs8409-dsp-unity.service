@@ -1,5 +1,5 @@
 [Unit]
-Description=CS8409: keep DSP sink at 0 dB (TB volume is the 4ch node)
+Description=CS8409: keep cs8409_speakers at 0 dB (TB volume is the 4ch node)
 After=pipewire.service pipewire-pulse.service wireplumber.service
 Wants=pipewire.service pipewire-pulse.service
 PartOf=pipewire.service

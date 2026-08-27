@@ -42,15 +42,17 @@ Stereo processing, then `Dsp2To4Splitter`:
 | 14 | ThermalSpeakerProtection4ch | Apple thermal model |
 | 15 | 4ChOutput | output trim |
 
-Live graph (`../60-cs8409-crossover.conf`) maps 0/3/5/6/8/9/10 plus a hard
-clamp as chained `bq_*` nodes. Invert **on**, woofer delay **5 samples**.
-Tones: 1 kHz vs 500 Hz **−0.7 dB**. `param_eq` fan-out left RL/RR silent. Not
-1/2/4/11–14 (undocumented).
+Live graph (`../speaker-tuning/macbookpro14-3/filter-chain.conf`) is Apple
+order on the 2ch bus: **0 → 1 Mozart → 2 Loudness → 3+5 PEQ (280 Hz XML
+−20 dB) → 4 dual-band → 6 gain → limiter → 7 split → 8/9/10**. Invert **on**,
+woofer delay **5 samples**. Loudness: +4 dB @ 300 Hz, **+2 dB @ 6.5 kHz**
+(a 2 kHz Q=0.5 shelf plus XML +13 @ 1550 Hz sounded nasal). 1550 Hz is
+**+8 dB**. Mozart makeup +3 dB. Dual-band mid ratio 1.8. Not 11–14.
 
 ```bash
 python3 render_filter.py
 python3 render_filter.py --no-delay
-python3 measure_crossover.py
+python3 measure_crossover.py   # records cs8409_speakers.playback
 ```
 
 Do **not** write a new kernel driver. Do **not** use `speakersafetyd`

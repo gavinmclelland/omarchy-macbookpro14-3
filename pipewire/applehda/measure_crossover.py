@@ -13,7 +13,7 @@ SR = 44100
 AMP = 0.08
 TONE = 0.45
 GAP = 0.12
-FREQS = [500, 800, 1000, 1250, 1600]
+FREQS = [80, 125, 180, 280, 500, 1000, 2000, 6000, 10000]
 PLAYBACK = "cs8409_speakers.playback"
 MIC = "alsa_input.pci-0000_00_1f.3.analog-stereo"
 
@@ -104,7 +104,7 @@ def main() -> int:
             break
     block = int(SR * (TONE + GAP))
     tone_n = int(SR * TONE)
-    print(f"{'Hz':>6} {'el-tw':>7} {'el-wf':>7} {'mic':>7} {'vs500':>7}")
+    print(f"{'Hz':>6} {'el-tw':>7} {'el-wf':>7} {'mic':>7}")
     mics = []
     for i, f in enumerate(FREQS):
         a = start + i * block
@@ -114,7 +114,7 @@ def main() -> int:
         em = db(goertzel(mm[a:b] if mm else [0.0], f))
         mics.append(em)
         print(f"  {f:4d} {et:7.1f} {ew:7.1f} {em:7.1f}")
-    ref = mics[0]
+    ref = mics[FREQS.index(500)] if 500 in FREQS else mics[0]
     print("mic vs 500 Hz:")
     for f, m in zip(FREQS, mics):
         print(f"  {f:4d}  {m - ref:+6.1f} dB")
