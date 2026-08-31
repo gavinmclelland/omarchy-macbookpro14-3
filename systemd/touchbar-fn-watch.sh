@@ -37,14 +37,16 @@ p=$(fnmode_path) || { log "no Touch Bar fnmode after wait"; exit 1; }
 [ -S /run/keyd.socket ] || { log "keyd socket missing"; exit 1; }
 log "watching keyd fn layer → $p (0=F-keys, 1=media)"
 
-# keyd v2.6 listen exits if its stdout reader disappears. Keep this shell
-# as the reader for the lifetime of the process.
-while IFS= read -r line; do
-	case "$line" in
-	+fn) set_mode 0 ;;
-	-fn) set_mode 1 ;;
-	esac
-done < <(exec /usr/bin/keyd listen)
-
-log "keyd listen ended"
-exit 1
+# keyd listen dies if the daemon restarts or stdout goes away. Loop so
+# systemd Restart= is not the only recovery, and so a boot race with keyd
+# cannot leave Fn stuck.
+while :; do
+	while IFS= read -r line; do
+		case "$line" in
+		+fn) set_mode 0 ;;
+		-fn) set_mode 1 ;;
+		esac
+	done < <(exec /usr/bin/keyd listen)
+	log "keyd listen ended; retry"
+	sleep 2
+done

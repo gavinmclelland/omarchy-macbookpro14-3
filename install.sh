@@ -40,8 +40,11 @@ install_keyd() {
 	systemctl daemon-reload
 	systemctl enable --now keyd.service
 	systemctl restart keyd.service
-	systemctl enable --now touchbar-fn.service
-	systemctl restart touchbar-fn.service
+	# WantedBy=touchbar.service (not multi-user): that After= cycle skipped
+	# the unit on boot. Enable here; start after ibridge if the bar is up.
+	systemctl disable touchbar-fn.service 2>/dev/null || true
+	systemctl enable touchbar-fn.service
+	systemctl try-restart touchbar-fn.service 2>/dev/null || true
 }
 
 install_ibridge() {
@@ -64,8 +67,10 @@ install_ibridge() {
 	systemctl daemon-reload
 	systemctl enable touchbar.service
 	systemctl start touchbar.service
-	# Fn watcher needs the TB sysfs; restart if keyd already installed it.
-	systemctl try-restart touchbar-fn.service 2>/dev/null || true
+	# Fn watcher needs the TB sysfs; it is WantedBy=touchbar.service so a
+	# later boot starts it after this oneshot. Start it now too.
+	systemctl enable --now touchbar-fn.service
+	systemctl restart touchbar-fn.service
 }
 
 install_boot() {
