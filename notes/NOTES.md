@@ -74,7 +74,7 @@ Native path: `apple_ib_tb` watches `KEY_FN` on the SPI keyboard (`tbkbd`). That 
 
 Workaround (`systemd/touchbar-fn.service`): `keyd listen` emits `+fn`/`-fn` for the keyd `fn` layer. The watcher writes `fnmode=0` (F-keys) on hold and `fnmode=1` (media) on release. Keep the layer named `fn`. keyd `Fn+\`` Esc is unchanged. **User-confirmed:** hold Fn switches the strip to F1–F12. [#16](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/16) closed.
 
-Idle: `idle_timeout=300` `dim_timeout=150` (lock / screensaver). Not user-confirmed yet. [#1](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/1).
+The same grab starves `last_event_time` (only TB/trackpad reset it). After `dim_timeout=150` / `idle_timeout=300` the idle worker turns the strip off, then a `fnmode` write flashes F-keys and the worker blanks it again — Fn looks dead. Watcher now sets idle/dim to `-1` while Fn is held. `fnmode_store` also stamps `last_event_time` (needs apple_ib_tb reload). [#1](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/1).
 
 Custom pixels / Siri orb: needs iBridge **USB config 2** + DRM (`xeeban` `appletbdrm`/`dfrd`). `tiny-dfr` is T2-only. Parked [#6](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/6).
 
@@ -162,7 +162,7 @@ nvme0n1p4  231G  LUKS/btrfs        Omarchy
 
 | Issue | Needs |
 | --- | --- |
-| [#1](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/1) TB dim | Leave idle ~150 s / 300 s and confirm |
+| [#1](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/1) TB dim | keyd grab starves last_event_time; typing does not wake TB. Fn hold now forces idle off. Confirm dim after trackpad idle |
 | [#10](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/10) Wi-Fi Apple MAC | **Reboot** (NVRAM already written) |
 | [#11](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/11) Option EFI Boot | **Reboot**, hold Option |
 | [#12](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/12) suspend/resume | One `systemctl suspend` / lid: TB, ALS, USB-C, Wi-Fi, T1 still `8600` |

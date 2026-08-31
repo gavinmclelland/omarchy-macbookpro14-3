@@ -728,7 +728,12 @@ static ssize_t fnmode_store(struct device *dev, struct device_attribute *attr,
 		return -EINVAL;
 
 	tb_dev->fn_mode = new;
-	appletb_update_touchbar(tb_dev, false);
+	/* FIX (local): userspace writes fnmode because keyd EVIOCGRAB
+	 * starves KEY_FN / last_event_time. Count that write as activity
+	 * so the idle worker does not turn the strip off on the same tick.
+	 */
+	tb_dev->last_event_time = ktime_get();
+	appletb_update_touchbar(tb_dev, true);
 
 	return size;
 }

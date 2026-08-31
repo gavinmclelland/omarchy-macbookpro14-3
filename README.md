@@ -88,8 +88,9 @@ Release for media keys. Esc stays.
 
 `Fn+\`` is a keyd backup Esc (`keyd/apple-t1.conf`). keyd **grabs** the SPI
 keyboard, so `apple_ib_tb` never sees `KEY_FN`. `systemd/touchbar-fn.service`
-watches the keyd `fn` layer and writes `fnmode` 0/1. Keep that layer named
-`fn`.
+watches the keyd `fn` layer and writes `fnmode` 0/1. While Fn is held it
+also disables idle/dim so the strip cannot blank on a stale
+`last_event_time`. Keep that layer named `fn`.
 
 ## Still open
 
