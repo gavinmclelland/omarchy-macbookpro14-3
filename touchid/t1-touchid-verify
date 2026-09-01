@@ -1,0 +1,107 @@
+#!/usr/bin/env python3
+"""Verify a finger against the T1 SEP KernelRelay USB interface.
+
+This is the overlay entry point PAM will call. It talks to iBridge 05ac:8600
+config-2 interface 7 (KernelRelayHost), not libfprint and not T2 BridgeXPC.
+
+Usage:
+  t1-touchid-verify --describe     # parse sysfs descriptors, no USB I/O
+  t1-touchid-verify --probe        # claim the SEP bulk pair (needs config 2)
+  t1-touchid-verify                # probe + wait for a match (needs finger)
+"""
+
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from t1_relay import KRHeader, SepPipe, current_config, load_sep_from_sysfs
+from t1_usb import find_sep_interface, sep_in_config
+
+
+def cmd_describe(desc: Path) -> int:
+    raw = desc.read_bytes()
+    cfg = current_config()
+    sep = find_sep_interface(raw)
+    print(f"iBridge 05ac:8600 live_config={cfg}")
+    print(
+        f"SEP KernelRelay config={sep.config} iface={sep.interface} "
+        f"out=0x{sep.ep_out:02x} in=0x{sep.ep_in:02x}"
+    )
+    print(f"sep_in_config1={sep_in_config(raw, 1)} sep_in_config2={sep_in_config(raw, 2)}")
+    if cfg != sep.config:
+        print(
+            f"SEP interface is not active (need USB config {sep.config}, have {cfg})",
+            file=sys.stderr,
+        )
+        return 2
+    return 0
+
+
+def cmd_probe(wait_match: bool) -> int:
+    cfg = current_config()
+    sep = load_sep_from_sysfs()
+    print(f"live_config={cfg} need_config={sep.config}")
+    if cfg != sep.config:
+        print(
+            "error: iBridge is not in USB config 2; KernelRelay interface missing. "
+            "Do not SET_CONFIGURATION while apple_ibridge is bound.",
+            file=sys.stderr,
+        )
+        return 2
+    with SepPipe(sep) as pipe:
+        got = pipe.configuration()
+        print(f"libusb_config={got} claimed_iface={sep.interface}")
+        # Kick the IN pipe once so we know the bulk pair is alive.
+        first = pipe.bulk_in(timeout_ms=250)
+        print(f"bulk_in_0={len(first)} bytes {first[:16].hex() if first else ''}")
+        if not wait_match:
+            print("probe-ok")
+            return 0
+        print("waiting for finger on power-button Touch ID…", flush=True)
+        try:
+            pipe.bulk_out(KRHeader(b"\x00" * 4, 0, 0, 0, 0, 32, 0).pack(), timeout_ms=500)
+        except Exception as e:
+            print(f"bulk_out hello: {e}")
+        deadline_reads = 40
+        for n in range(deadline_reads):
+            blob = pipe.bulk_in(timeout_ms=500)
+            if not blob:
+                continue
+            print(f"event[{n}] {len(blob)} {blob[:32].hex()}")
+            try:
+                hdr = KRHeader.unpack(blob)
+                print(
+                    f"  fourcc={hdr.fourcc!r} idx={hdr.msg_index} "
+                    f"cmd={hdr.cmd:#x} mlen={hdr.msg_length} dlen={hdr.data_length}"
+                )
+            except ValueError:
+                pass
+            # A non-empty IN from the SEP pipe after a finger is the match path
+            # we still have to decode; treat a well-formed header as progress,
+            # not a PAM success.
+        print("verify-no-match", file=sys.stderr)
+        return 1
+
+
+def main() -> int:
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--describe", action="store_true")
+    p.add_argument("--probe", action="store_true")
+    p.add_argument(
+        "--descriptors",
+        type=Path,
+        default=Path("/sys/bus/usb/devices/1-3/descriptors"),
+        help="USB descriptors blob (default: live iBridge sysfs)",
+    )
+    args = p.parse_args()
+    if args.describe:
+        return cmd_describe(args.descriptors)
+    return cmd_probe(wait_match=not args.probe)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
