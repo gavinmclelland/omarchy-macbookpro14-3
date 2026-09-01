@@ -6,7 +6,7 @@ import subprocess
 import sys
 import unittest
 
-from t1_relay import KRHeader, KR_HEADER_SIZE
+from t1_relay import KRHeader, KR_HEADER_SIZE, verify_transport
 from t1_usb import (
     APPLE_VID,
     IBRIDGE_PID,
@@ -77,6 +77,17 @@ class T1UsbTests(unittest.TestCase):
         self.assertIn("SEP KernelRelay config=2 iface=7", out)
         self.assertIn("out=0x05 in=0x88", out)
         self.assertIn("sep_in_config2=True", out)
+
+    def test_verify_transport_never_switches_config(self):
+        sep = find_sep_interface(self.raw)
+        self.assertEqual(verify_transport(1, sep), "ep0")
+        self.assertEqual(verify_transport(None, sep), "ep0")
+        self.assertEqual(verify_transport(2, sep), "bulk")
+        src = (Path(__file__).resolve().parent.parent / "t1_relay.py").read_text()
+        self.assertNotIn("libusb_set_configuration(", src)
+        script = RECONFIGURE.read_text()
+        self.assertNotIn('echo 2', script)
+        self.assertIn("exit 2", script)
 
     def test_reconfigure_script_refuses_set_configuration(self):
         proc = subprocess.run(

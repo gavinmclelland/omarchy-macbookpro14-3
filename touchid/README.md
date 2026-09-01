@@ -20,10 +20,11 @@ it. `omarchy-hw-fingerprint` is supposed to stay false.
 ## Tools
 
 ```
-PYTHONPATH=touchid python3 -m unittest touchid.tests.test_t1_usb -v
-touchid/t1-touchid-verify --describe   # sysfs only
-# root, apple_ibridge unloaded:
-touchid/t1-touchid-verify --probe
+PYTHONPATH=touchid python3 -m unittest tests.test_t1_usb -v
+touchid/t1-touchid-verify --describe   # fixture-safe; live sysfs only if path is 1-3
+touchid/t1-touchid-verify --probe      # EP0 if config 1; bulk only if already config 2
 ```
+
+Never `SET_CONFIGURATION(2)` on a live iBridge.
 
 Tracker: https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/20

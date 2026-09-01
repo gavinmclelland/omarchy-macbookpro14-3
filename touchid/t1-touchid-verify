@@ -18,7 +18,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from t1_relay import KRHeader, SepPipe, current_config, load_sep_from_sysfs
+from t1_relay import (
+    KRHeader,
+    Ep0Device,
+    LibusbError,
+    SepPipe,
+    current_config,
+    load_sep_from_sysfs,
+    verify_transport,
+)
 from t1_usb import find_sep_interface, sep_in_config
 
 
@@ -49,17 +57,39 @@ def cmd_describe(desc: Path) -> int:
     return 0
 
 
+def cmd_ep0(wait_match: bool) -> int:
+    """Vendor EP0 only. Never SET_CONFIGURATION."""
+    print("transport=ep0 (config 1; KernelRelay bulk iface not active)")
+    try:
+        with Ep0Device() as dev:
+            cfg = dev.configuration()
+            print(f"libusb_config={cfg}")
+            if cfg == 2:
+                print("unexpected: device already in config 2; not switching", file=sys.stderr)
+            # IN vendor-device probes. KernelRelay uses bulk on iface 7; EP0
+            # is the only non-deadlocking experiment on keyboard-mode TB.
+            for req_type, req in ((0xC0, 0x00), (0xC0, 0x52), (0xC0, 0x40)):
+                try:
+                    data = dev.control(req_type, req, length=8, timeout_ms=200)
+                    print(f"ep0 in {req_type:#x}/{req:#x} -> {data.hex()}")
+                except LibusbError as e:
+                    print(f"ep0 in {req_type:#x}/{req:#x} -> {e}")
+    except RuntimeError as e:
+        print(f"ep0 open failed: {e}", file=sys.stderr)
+        print("verify-no-match", file=sys.stderr)
+        return 1
+    print("verify-no-match", file=sys.stderr)
+    print("KernelRelay bulk not reachable without USB config 2; EP0 is not a match")
+    return 1
+
+
 def cmd_probe(wait_match: bool) -> int:
     cfg = current_config()
     sep = load_sep_from_sysfs()
-    print(f"live_config={cfg} need_config={sep.config}")
-    if cfg != sep.config:
-        print(
-            "error: iBridge is not in USB config 2; KernelRelay interface missing. "
-            "Do not SET_CONFIGURATION while apple_ibridge is bound.",
-            file=sys.stderr,
-        )
-        return 2
+    how = verify_transport(cfg, sep)
+    print(f"live_config={cfg} need_config={sep.config} transport={how}")
+    if how != "bulk":
+        return cmd_ep0(wait_match)
     with SepPipe(sep) as pipe:
         got = pipe.configuration()
         print(f"libusb_config={got} claimed_iface={sep.interface}")

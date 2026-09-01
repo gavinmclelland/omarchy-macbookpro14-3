@@ -104,7 +104,30 @@ def _libusb():
         ctypes.POINTER(ctypes.c_int),
     ]
     lib.libusb_get_configuration.restype = ctypes.c_int
+    lib.libusb_control_transfer.argtypes = [
+        ctypes.c_void_p,
+        ctypes.c_uint8,
+        ctypes.c_uint8,
+        ctypes.c_uint16,
+        ctypes.c_uint16,
+        ctypes.c_void_p,
+        ctypes.c_uint16,
+        ctypes.c_uint,
+    ]
+    lib.libusb_control_transfer.restype = ctypes.c_int
     return lib
+
+
+def verify_transport(live_config: int | None, sep: SepInterface) -> str:
+    """How to talk to KernelRelay without SET_CONFIGURATION.
+
+    'bulk' — live USB config already exposes iface 7.
+    'ep0'  — config 1: try vendor control on the default pipe only.
+    Never returns a 'set-config' action; that deadlocks this chassis.
+    """
+    if live_config == sep.config:
+        return "bulk"
+    return "ep0"
 
 
 class SepPipe:
@@ -124,6 +147,7 @@ class SepPipe:
             self._lib.libusb_exit(self._ctx)
             raise RuntimeError("open 05ac:8600 failed (need root / config 2)")
         self._lib.libusb_set_auto_detach_kernel_driver(self._dev, 1)
+        # Never change bConfigurationValue: that deadlocks 05ac:8600 on this A1707.
         rc = self._lib.libusb_claim_interface(self._dev, sep.interface)
         if rc != LIBUSB_SUCCESS:
             self._lib.libusb_close(self._dev)
@@ -171,6 +195,60 @@ class SepPipe:
     def close(self) -> None:
         if getattr(self, "_dev", None):
             self._lib.libusb_release_interface(self._dev, self.sep.interface)
+            self._lib.libusb_close(self._dev)
+            self._dev = None
+        if getattr(self, "_ctx", None):
+            self._lib.libusb_exit(self._ctx)
+            self._ctx = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self.close()
+
+
+class Ep0Device:
+    """Open 05ac:8600 for vendor control on EP0. Does not claim iface 7 or set config."""
+
+    def __init__(self):
+        self._lib = _libusb()
+        self._ctx = ctypes.c_void_p()
+        rc = self._lib.libusb_init(ctypes.byref(self._ctx))
+        if rc != LIBUSB_SUCCESS:
+            raise LibusbError(rc, "libusb_init")
+        self._dev = self._lib.libusb_open_device_with_vid_pid(
+            self._ctx, APPLE_VID, IBRIDGE_PID
+        )
+        if not self._dev:
+            self._lib.libusb_exit(self._ctx)
+            raise RuntimeError("open 05ac:8600 failed (need permission)")
+
+    def configuration(self) -> int:
+        cfg = ctypes.c_int()
+        rc = self._lib.libusb_get_configuration(self._dev, ctypes.byref(cfg))
+        if rc != LIBUSB_SUCCESS:
+            raise LibusbError(rc, "get_configuration")
+        return cfg.value
+
+    def control(self, request_type: int, request: int, value: int = 0, index: int = 0, length: int = 8, timeout_ms: int = 250) -> bytes:
+        buf = ctypes.create_string_buffer(length)
+        rc = self._lib.libusb_control_transfer(
+            self._dev,
+            ctypes.c_uint8(request_type),
+            ctypes.c_uint8(request),
+            ctypes.c_uint16(value),
+            ctypes.c_uint16(index),
+            buf,
+            ctypes.c_uint16(length),
+            timeout_ms,
+        )
+        if rc < 0:
+            raise LibusbError(rc, f"control {request_type:#x}/{request:#x}")
+        return buf.raw[:rc]
+
+    def close(self) -> None:
+        if getattr(self, "_dev", None):
             self._lib.libusb_close(self._dev)
             self._dev = None
         if getattr(self, "_ctx", None):
