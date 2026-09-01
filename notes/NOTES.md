@@ -169,7 +169,7 @@ nvme0n1p4  231G  LUKS/btrfs        Omarchy
 | [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) speaker quality | Layout 57 + invert + delay. DSP unity; TB volume is physical 4ch |
 | [#2](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/2) Polaris GPU-process FATAL | Chromium mitigated; Spotify CEF still GPU. Per-app `--disable-gpu` or a real Mesa/BAR fix |
 | [#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15) Spotify CEF abort | PID 67730 `substr` trap. PID 9990 (16:43) is #2, not this |
-| [#20](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/20) Touch ID / T1 SEP | Not a USB reader. `omarchy-hw-fingerprint` is 1. Do not install T2/fprintd yet |
+| [#20](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/20) Touch ID / T1 SEP | KernelRelay is USB config 2 iface 7 only. Live SET_CONFIGURATION(2) D-state deadlock. Reboot recovered 8600. No match. Do not retry config 2. |
 
 ## Open better (parked)
 
