@@ -11,7 +11,9 @@ it. `omarchy-hw-fingerprint` is supposed to stay false.
 ## Do not
 
 - Install T2 packages (`linux-t2`, `tiny-dfr`, `t2bce`, `t2-touchid-linux`).
-- `SET_CONFIGURATION(2)` while `apple_ibridge` is bound (deadlock).
+- `SET_CONFIGURATION(2)` at all on a live iBridge. Writing `bConfigurationValue=2`
+  on this A1707 wedges the USB write in D-state (2026-09-01). Same class of hang
+  as `apple_ibridge` calling `usb_set_configuration`.
 - Load appleibridge at sysinit.
 - Leave the iBridge in config 2: Touch Bar keyboard-mode HID goes away.
 

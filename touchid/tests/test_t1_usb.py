@@ -17,6 +17,7 @@ from t1_usb import (
 
 FIXTURE = Path(__file__).resolve().parent / "ibridge-descriptors.bin"
 VERIFY = Path(__file__).resolve().parent.parent / "t1-touchid-verify"
+RECONFIGURE = Path(__file__).resolve().parent.parent / "t1-sep-reconfigure.sh"
 
 
 class T1UsbTests(unittest.TestCase):
@@ -76,6 +77,16 @@ class T1UsbTests(unittest.TestCase):
         self.assertIn("SEP KernelRelay config=2 iface=7", out)
         self.assertIn("out=0x05 in=0x88", out)
         self.assertIn("sep_in_config2=True", out)
+
+    def test_reconfigure_script_refuses_set_configuration(self):
+        proc = subprocess.run(
+            ["bash", str(RECONFIGURE)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(proc.returncode, 2)
+        self.assertIn("deadlocks iBridge USB", proc.stderr)
 
 
 if __name__ == "__main__":

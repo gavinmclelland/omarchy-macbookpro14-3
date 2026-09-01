@@ -24,7 +24,15 @@ from t1_usb import find_sep_interface, sep_in_config
 
 def cmd_describe(desc: Path) -> int:
     raw = desc.read_bytes()
-    cfg = current_config()
+    live = Path("/sys/bus/usb/devices/1-3/descriptors")
+    # Do not touch live iBridge sysfs when describing a fixture; a wedged
+    # usb_set_configuration makes bConfigurationValue reads hang in D-state.
+    cfg = None
+    try:
+        if desc.resolve() == live.resolve():
+            cfg = current_config()
+    except OSError:
+        cfg = None
     sep = find_sep_interface(raw)
     print(f"iBridge 05ac:8600 live_config={cfg}")
     print(
