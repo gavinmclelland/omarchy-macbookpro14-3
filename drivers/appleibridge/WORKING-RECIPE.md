@@ -11,16 +11,14 @@ show `05ac:8600`.** If it shows `1281`, none of this applies — restore the ESP
 
 Neither is the thing the community discusses.
 
-**1. A self-deadlock in the driver.** `apple_ib_set_tb_mode()` calls
-`usb_set_configuration()` while holding `appleib_tbmode_lock`. That call re-binds every
-interface driver synchronously in the same task, re-entering `appleib_hid_probe()` →
-`apple_ib_set_tb_mode()` → the same mutex. Unkillable `D` state, hangs `sysinit.target`,
-blocks shutdown. See `README.md`, Fix 2.
-
-It can also be **side-stepped without patching**: the deadlock only fires when the USB
-configuration actually changes. Loading with `tb_mode_param=keyboard` selects the config the
-device already boots in, takes the early return, and never calls the dangerous function.
-That is what this recipe does.
+**1. Live USB configuration switching D-states this chassis.** The imported
+driver used to call `usb_set_configuration()` from its HID probe. The first
+failure was recursive mutex deadlock; after guarding that recursion, both a
+sysfs switch and a libusb switch still wedged in kernel USB. The local driver
+therefore no longer switches configurations at all. It defaults to keyboard
+mode, validates the configuration inherited at boot, and returns `-EPERM` on a
+mismatch. `tb_mode_param=keyboard` below is explicit documentation of the
+expected config, not permission to change it. See `README.md`, Fix 2.
 
 **2. `hid-sensor-hub` steals the interface.** This is the part nothing documents. The
 iBridge exposes two HID interfaces, and at boot the generic drivers claim both:
@@ -52,7 +50,7 @@ K=/lib/modules/$(uname -r)/updates/dkms
 mkdir -p /tmp/tbmods
 for m in apple-ibridge apple-ib-tb apple-ib-als; do zstd -qdf "$K/$m.ko.zst" -o "/tmp/tbmods/$m.ko"; done
 
-# 3. coordinator first, in keyboard mode so it cannot deadlock
+# 3. coordinator first; it validates keyboard mode and never changes USB config
 sudo insmod /tmp/tbmods/apple-ibridge.ko tb_mode_param=keyboard
 sudo insmod /tmp/tbmods/apple-ib-tb.ko
 

@@ -23,7 +23,7 @@ Written 2026-08-25–26. This is what actually landed on the laptop, including f
 | Display brightness | `gmux_backlight` |
 | Sleep | `/sys/power/mem_sleep` is `s2idle [deep]` — current mode **deep**, never tested this boot |
 
-Four T1 functions share the iBridge: Touch Bar, FaceTime webcam, Touch ID (no Linux path, [#20](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/20)), ALS. Speakers and mics are CS8409/CS42L83 + MAX98706, not the T1.
+Four T1 functions share the iBridge: Touch Bar, FaceTime webcam, Touch ID (no public reproducible driver yet, [#20](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/20)), ALS. Speakers and mics are CS8409/CS42L83 + MAX98706, not the T1.
 
 No iBridge die temperature is exposed. Closest skin sensors (`Ts0P`/`Ts1P`) were ~30–32 °C while CPU ~78–81 °C and GPU edge ~64 °C.
 
@@ -65,7 +65,7 @@ DKMS `appleibridge` from the F13-Kr1pt0n lineage, **late load** only:
 - `REMAKE_INITRD=no`, dest `/updates/dkms`
 - blacklist `apple_ibridge` `apple_ib_tb` `apple_ib_als` — **never** `modules-load.d`
 - `touchbar.service` after `multi-user.target`, `insmod` (ignores blacklist)
-- `tb_mode_param=keyboard` so `usb_set_configuration()` is not called (self-deadlock)
+- `tb_mode_param=keyboard`; driver validates config 1 and refuses every live USB config change
 - Steal HID `0003:05AC:8600.0002` from `hid-sensor-hub` → `apple-ibridge-hid`
 
 `fnmode=1`: Esc + **media keys** (brightness, kbd light, volume). **Hold keyboard Fn** (bottom-left, next to Control) for F1–F12. Esc stays.
@@ -151,7 +151,7 @@ nvme0n1p4  231G  LUKS/btrfs        Omarchy
 | `apple_ib_tb` KEY_FN while keyd grabs SPI | `tbkbd` attached but starved. Fixed: `keyd listen` → `fnmode` 0/1. User-confirmed. |
 | Guessed `BCM.hcd` | Do not. Can take UART BT offline. |
 | Touch Bar modules at sysinit | Deadlock / hang `sysinit.target`; forced power-off. Late `insmod` only. |
-| iBridge USB config 2 (display mode) | `usb_set_configuration` self-deadlock. Stay `tb_mode_param=keyboard`. |
+| iBridge USB config 2 (display mode) | Live sysfs and libusb switches D-state. Driver switching removed; stay config 1. |
 | 4ch ALSA node as **app default sink** | Fuller sound, then **Spotify cannot play**. Fixed: stereo filter is the default; 4ch is playback-only. |
 | Spotify CEF `string_view::substr` abort | SIGTRAP ~30 s after a PipeWire bounce. One dump; relaunch clean. [#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15). |
 | Extract Linux `.hcd` from Apple MiniDriver `.hex` | Wrong image (ARM MiniDriver, not HCI PatchRAM). |
@@ -169,7 +169,7 @@ nvme0n1p4  231G  LUKS/btrfs        Omarchy
 | [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) speaker quality | Layout 57 + invert + delay. DSP unity; TB volume is physical 4ch |
 | [#2](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/2) Polaris GPU-process FATAL | Chromium mitigated; Spotify CEF still GPU. Per-app `--disable-gpu` or a real Mesa/BAR fix |
 | [#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15) Spotify CEF abort | PID 67730 `substr` trap. PID 9990 (16:43) is #2, not this |
-| [#20](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/20) Touch ID / T1 SEP | KernelRelay is USB config 2 iface 7 only. Live SET_CONFIGURATION(2) D-state deadlock. Reboot recovered 8600. No match. Do not retry config 2. |
+| [#20](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/20) Touch ID / T1 SEP | KernelRelay is config 2 iface 7. Live switches D-state here; never retry. Enumeration-time config 2 is proven elsewhere, but public code stops at transport/display. T1Bridge auth is reported working but unpublished (2026-09-01). |
 
 ## Open better (parked)
 

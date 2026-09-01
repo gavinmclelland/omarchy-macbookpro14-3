@@ -71,10 +71,9 @@ done
 log "modules unpacked"
 
 # ── 2. coordinator first, in keyboard mode ───────────────────────────────────────────────
-# tb_mode_param=keyboard picks the USB configuration the device already boots in, so
-# apple_ib_set_tb_mode() takes its early return and never calls usb_set_configuration().
-# That call re-binds interface drivers in the same task and re-enters the function, which
-# self-deadlocks on appleib_tbmode_lock in unpatched builds.
+# tb_mode_param=keyboard declares the USB configuration this service requires.
+# The local driver only validates the inherited config and structurally refuses
+# every live configuration change.
 if ! grep -q '^apple_ibridge ' /proc/modules; then
 	timeout 45 insmod "$WORK/apple-ibridge.ko" tb_mode_param=keyboard || { log "apple_ibridge failed to load"; exit 1; }
 	log "apple_ibridge loaded (keyboard mode)"

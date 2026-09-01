@@ -115,17 +115,17 @@ struct appleib_hid_dev_info {
 };
 /* ======================================================================= */
 /* MBP14,3: Touch Bar mode coordinator (6.15+)                              */
-/* - tb_mode=auto|keyboard|display  (default: auto)                         */
+/* - tb_mode=keyboard|display  (default: keyboard; validation only)         */
 /* - prefer_apple_ib=Y to prefer out-of-tree over upstream HID/DRM          */
 /* ======================================================================= */
 
-enum tb_mode apple_tb_mode = TB_MODE_AUTO;
+enum tb_mode apple_tb_mode = TB_MODE_KEYBOARD;
 bool apple_ib_prefer_binding = true;
 
-static char *tb_mode_param = "auto";
+static char *tb_mode_param = "keyboard";
 module_param(tb_mode_param, charp, 0644);
 MODULE_PARM_DESC(tb_mode_param,
-	"Touch Bar mode: auto|keyboard|display (default: auto) — MBP14,3");
+	"Expected Touch Bar mode: keyboard|display (default: keyboard; never switches live) — MBP14,3");
 
 static bool prefer_apple_ib = true;
 module_param(prefer_apple_ib, bool, 0644);
@@ -134,21 +134,12 @@ MODULE_PARM_DESC(prefer_apple_ib,
 
 static enum tb_mode appleib_parse_tb_mode_param(void)
 {
-	if (!tb_mode_param)
-		return TB_MODE_AUTO;
-	if (!strcmp(tb_mode_param, "keyboard"))
-		return TB_MODE_KEYBOARD;
-	if (!strcmp(tb_mode_param, "display"))
+	if (tb_mode_param && !strcmp(tb_mode_param, "display"))
 		return TB_MODE_DISPLAY;
-	return TB_MODE_AUTO;
+	return TB_MODE_KEYBOARD;
 }
 
 static DEFINE_MUTEX(appleib_tbmode_lock);
-
-/* FIX 2 (local): guards against re-entering apple_ib_set_tb_mode(). Protected by
- * appleib_tbmode_lock. See the long comment in that function.
- */
-static bool appleib_tbmode_switching;
 
 static bool appleib_cfg_is_keyboard(const struct usb_host_config *cfg)
 {
@@ -202,7 +193,7 @@ static int __maybe_unused appleib_find_config_values(struct usb_device *udev, in
 	return (*kbd_cv >= 0 || *disp_cv >= 0) ? 0 : -ENODEV;
 }
 
-/* Switch Touch Bar configuration. No-op on < 6.15 */
+/* Validate the inherited Touch Bar configuration. Never switch it live. */
 int apple_ib_set_tb_mode(struct usb_device *udev, enum tb_mode mode)
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6,15,0)
@@ -212,28 +203,6 @@ int apple_ib_set_tb_mode(struct usb_device *udev, enum tb_mode mode)
 		return -ENODEV;
 
 	mutex_lock(&appleib_tbmode_lock);
-
-	/* FIX 2 (local): usb_set_configuration() below tears down the current USB
-	 * configuration and instantiates the new one, which unbinds and re-binds every
-	 * interface driver SYNCHRONOUSLY, in this same task. That re-invokes
-	 * appleib_hid_probe(), which calls this function again — and upstream then takes
-	 * appleib_tbmode_lock a second time from the task that already holds it:
-	 *
-	 *   INFO: task modprobe:24033 blocked for more than 983 seconds.
-	 *   INFO: task modprobe:24033 is blocked on a mutex likely owned by
-	 *         task modprobe:24033.
-	 *
-	 * The wedged task is unkillable (D state), hangs sysinit.target so the login
-	 * screen never appears, and blocks shutdown, requiring a forced power-off.
-	 *
-	 * Two changes fix it: this re-entrancy guard, and dropping the lock around
-	 * usb_set_configuration() further down so the recursive call can reach the guard
-	 * instead of blocking on the mutex.
-	 */
-	if (appleib_tbmode_switching) {
-		mutex_unlock(&appleib_tbmode_lock);
-		return 0;
-	}
 
 	if (mode == TB_MODE_AUTO)
 		mode = appleib_parse_tb_mode_param();
@@ -263,24 +232,17 @@ int apple_ib_set_tb_mode(struct usb_device *udev, enum tb_mode mode)
 		goto out_unlock;
 	}
 
-	dev_info(&udev->dev, "MBP14,3: switching Touch Bar to cfg=%d (%s)\n",
-		 target_cv, (target_cv == dcv) ? "display" : "keyboard");
-
-	/* FIX 2 (local): must NOT hold appleib_tbmode_lock across this call — it invokes
-	 * probe/remove callbacks in this task which re-enter this function.
+	/* Never change a live iBridge configuration on this chassis. Both the
+	 * sysfs and libusb paths have D-stated in usb_set_configuration(), even
+	 * after the interface drivers were detached. A different configuration
+	 * must be selected before first enumeration by a separately reviewed boot
+	 * path; this HID driver only validates the configuration it inherited.
 	 */
-	appleib_tbmode_switching = true;
-	mutex_unlock(&appleib_tbmode_lock);
-
-	ret = usb_set_configuration(udev, target_cv);
-	if (ret)
-		dev_err(&udev->dev, "MBP14,3: usb_set_configuration(%d) failed: %d\n",
-			target_cv, ret);
-	else
-		msleep(150); /* let udev settle */
-
-	mutex_lock(&appleib_tbmode_lock);
-	appleib_tbmode_switching = false;
+	dev_err(&udev->dev,
+		"MBP14,3: refusing live Touch Bar config switch %d -> %d (%s)\n",
+		udev->actconfig ? udev->actconfig->desc.bConfigurationValue : 0,
+		target_cv, (target_cv == dcv) ? "display" : "keyboard");
+	ret = -EPERM;
 
 out_unlock:
 	mutex_unlock(&appleib_tbmode_lock);
@@ -854,16 +816,20 @@ static int appleib_hid_probe(struct hid_device *hdev,
 	udev = hid_to_usb_dev(hdev);
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6,15,0)
-	/* On new kernels: switch according to tb_mode (AUTO prefers display). */
+	/* Validate the inherited USB configuration. Never switch it live. */
 	rc = apple_ib_set_tb_mode(udev, apple_tb_mode);
-	if (rc && rc != -ENODEV)
-		dev_warn(&hdev->dev, "MBP14,3: tb_mode switch returned %d; continuing\n", rc);
+	if (rc) {
+		dev_warn(&hdev->dev,
+			 "MBP14,3: inherited Touch Bar mode rejected: %d\n", rc);
+		return rc;
+	}
 #else
-	/* Legacy kernels: enforce the historical 'basic' (keyboard) config. */
-	if (udev->actconfig->desc.bConfigurationValue != APPLETB_BASIC_CONFIG) {
-		/* Keep your original call for older kernels */
-		rc = usb_driver_set_configuration(udev, APPLETB_BASIC_CONFIG);
-		return rc ? rc : -ENODEV;
+	/* Legacy kernels must also inherit the historical keyboard config. */
+	if (!udev->actconfig ||
+	    udev->actconfig->desc.bConfigurationValue != APPLETB_BASIC_CONFIG) {
+		dev_err(&hdev->dev,
+			"MBP14,3: refusing live switch to keyboard configuration\n");
+		return -EPERM;
 	}
 #endif
 

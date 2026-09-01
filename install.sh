@@ -49,6 +49,11 @@ install_keyd() {
 
 install_ibridge() {
 	echo "==> appleibridge DKMS (late load only)"
+	if grep -Eq 'usb_(driver_)?set_configuration[[:space:]]*\(udev' \
+		"$ROOT/drivers/appleibridge/apple-ibridge.c"; then
+		echo "refusing unsafe appleibridge source: live USB configuration switch present" >&2
+		exit 1
+	fi
 	pacman -S --noconfirm --needed dkms linux-headers
 	rm -rf /usr/src/appleibridge-0.1
 	mkdir -p /usr/src/appleibridge-0.1

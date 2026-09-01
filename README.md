@@ -14,7 +14,7 @@ DMI product. Esc is the left Touch Bar key, not a separate device.
 
 | Chip / bus | Devices | Layer |
 | --- | --- | --- |
-| T1 iBridge `05ac:8600` | TB Esc/media/F-keys, UVC cam, ALS, Touch ID (no Linux path) | `drivers/appleibridge/` `modprobe.d/` `systemd/touchbar*` `keyd/` [#20](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/20) |
+| T1 iBridge `05ac:8600` | TB Esc/media/F-keys, UVC cam, ALS, Touch ID (no public driver yet) | `drivers/appleibridge/` `modprobe.d/` `systemd/touchbar*` `keyd/` [#20](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/20) |
 | SPI APP000D | keys, pad, kbd light | mainline `applespi` + `keyd/` |
 | PCI BCM43602 | Wi-Fi | `firmware/brcm/` |
 | UART BCM20703 | BT | kernel ROM — no `.hcd` |
@@ -30,7 +30,7 @@ DMI product. Esc is the left Touch Bar key, not a separate device.
 | Speakers + mic | works; layout 57 PEQ live | `pipewire/` [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) — davidjo + userspace DSP, not a new kernel driver |
 | Spotify CEF abort | [#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15) | `string_view::substr` SIGTRAP — app, not CS8409 |
 | FaceTime webcam | works | iBridge UVC `/dev/video0` 1280×720 |
-| Touch ID | no Linux path | T1 SEP, not libfprint — [#20](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/20) |
+| Touch ID | blocked pending reproducible T1Bridge source | T1 SEP, not libfprint — [#20](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/20) |
 | Touch Bar Esc + media + F1–F12 | works | `drivers/` + `keyd/` + `systemd/touchbar*` |
 | USB-C after suspend | works | `boot/` `pcie_ports=compat` |
 | NVMe suspend | works | `d3cold_allowed=0` on `0000:02:00.0` |

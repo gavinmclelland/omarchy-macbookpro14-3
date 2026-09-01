@@ -5,9 +5,10 @@
 # 05ac:8600 wedged the writer in D-state (kernel USB). Same deadlock class as
 # apple_ibridge calling usb_set_configuration. Do not retry on a live iBridge.
 #
-# KernelRelayHost SEP (ff/f9/11) only exists in config 2. Reaching it without
-# a config switch is unsolved. This script is a hard fail so installers cannot
-# brick the Touch Bar stack.
+# KernelRelayHost SEP (ff/f9/11) only exists in config 2. A separate upstream
+# project selected config 2 at USB enumeration on a MacBookPro13,2, but loading
+# that selector on an already-enumerated device reprobes it and is unsafe here.
+# This script is a hard fail so installers cannot wedge the Touch Bar stack.
 set -euo pipefail
 echo "refusing: SET_CONFIGURATION(2) deadlocks iBridge USB on this chassis" >&2
 echo "SEP interface is config 2 iface 7; keyboard-mode TB is config 1." >&2

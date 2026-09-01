@@ -7,3 +7,4 @@ This tree is hardware enablement for a T1 MacBook Pro on Omarchy. Keep it boring
 - The Wi-Fi NVRAM in `firmware/brcm/` must keep `macaddr=xx:xx:xx:xx:xx:xx` in git. Set the real Apple MAC only on the machine.
 - Do not install T2 packages (`tiny-dfr`, `linux-t2`) on a T1.
 - Touch Bar modules must not load from `modules-load.d` / initramfs. A wedged load hangs `sysinit.target`.
+- Never switch a live iBridge to USB configuration 2. Both sysfs and libusb paths D-stated this chassis. Do not load a configuration-selector module that reprobes an already-enumerated `05ac:8600` device.

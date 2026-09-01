@@ -34,17 +34,18 @@ kernel-API problem — a plain ordering bug.
 
 Fix: move the definition above `struct appletb_device`, unchanged.
 
-## Fix 2 — self-deadlock in `apple_ib_set_tb_mode()`
+## Fix 2 — live USB configuration switching removed
 
-`apple-ibridge.c`. This is the one that matters, and the reason nobody gets the Touch Bar
-working on a current kernel.
+`apple-ibridge.c`. The imported driver defaulted to `auto`, preferred display
+mode, and called `usb_set_configuration()` from its HID probe when iBridge had
+booted in keyboard mode.
 
 ```
 INFO: task modprobe:24033 blocked for more than 983 seconds.
 INFO: task modprobe:24033 is blocked on a mutex likely owned by task modprobe:24033.
 ```
 
-The recursion:
+The first observed failure was recursive probe deadlock:
 
 ```
 appleib_hid_probe()                        .probe for the iBridge HID interfaces
@@ -58,41 +59,21 @@ appleib_hid_probe()                        .probe for the iBridge HID interfaces
                       └─ mutex_lock(&appleib_tbmode_lock)   ← already held by this task
 ```
 
-Upstream calls a USB core function that invokes driver callbacks while holding its own
-mutex. The wedged task is unkillable (`D` state), it hangs `sysinit.target` so the login
-screen never appears, and it blocks shutdown — recovery needs a forced power-off.
+The wedged task is unkillable (`D` state), hangs `sysinit.target`, and blocks
+shutdown. A re-entrancy guard avoided that particular mutex recursion, but two
+later live experiments still D-stated inside kernel USB: one through sysfs and
+one through libusb after detaching the interface drivers. Recovery required a
+forced reboot.
 
-Fix, two parts:
+The durable fix is structural:
 
-1. A re-entrancy guard, `appleib_tbmode_switching`.
-2. Drop `appleib_tbmode_lock` around `usb_set_configuration()`, so the recursive call can
-   reach the guard instead of blocking on the mutex. The guard alone is not enough — the
-   recursion happens *while the lock is held*, so the inner call would block before ever
-   testing the flag.
+- the module defaults to `keyboard`, not `auto`/display;
+- `apple_ib_set_tb_mode()` only validates the inherited configuration;
+- a mismatch returns `-EPERM` and the HID driver declines to bind;
+- the legacy-kernel path no longer calls `usb_driver_set_configuration()`.
 
-Lock discipline after the change, all four paths balanced:
-
-| Path | Flow |
-| --- | --- |
-| no device | returns before taking the lock |
-| guard hit (the recursive call) | lock → unlock → `return 0` |
-| early exits | lock → `goto out_unlock` → unlock |
-| config switch | lock → set flag → **unlock** → `usb_set_configuration()` → lock → clear flag → unlock |
-
-## A zero-code workaround, worth knowing
-
-The deadlock only fires when the driver actually *changes* USB configuration. It does not
-if the requested mode already matches the current one:
-
-```c
-if (udev->actconfig && udev->actconfig->desc.bConfigurationValue == target_cv) {
-        ret = 0;
-        goto out_unlock;          /* usb_set_configuration() never called */
-}
-```
-
-On this machine the iBridge boots in configuration 1, which contains the HID interfaces —
-the driver's definition of the *keyboard* config:
+On this machine iBridge boots in configuration 1, which contains the HID
+interfaces used by the firmware-drawn keyboard strip:
 
 ```
 bNumConfigurations: 3      current: 1
@@ -102,16 +83,16 @@ bNumConfigurations: 3      current: 1
   1-3:1.3  class=0x03  usbhid
 ```
 
-`appleib_cfg_is_keyboard()` matches `USB_CLASS_HID`, `appleib_cfg_is_display()` matches
-`USB_CLASS_VENDOR_SPEC`, and the default `AUTO` **prefers display** — so it tries to switch
-away from config 1 and deadlocks. Loading with
+Loading with
 
 ```
 apple_ibridge.tb_mode_param=keyboard
 ```
 
-selects the config the device is already in, takes the early return, and never deadlocks
-even on unpatched code. Keyboard mode is also the useful one: Esc and F1-F12.
+states the expected mode and succeeds only if the device already inherited that
+configuration. It never requests a live transition. Any future configuration-2
+work must choose it before first enumeration in a separately reviewed boot path;
+it does not belong in this HID probe.
 
 ## Build
 

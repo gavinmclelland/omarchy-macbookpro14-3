@@ -6,7 +6,7 @@ import subprocess
 import sys
 import unittest
 
-from t1_relay import KRHeader, KR_HEADER_SIZE, verify_transport
+from t1_relay import verify_transport
 from t1_usb import (
     APPLE_VID,
     IBRIDGE_PID,
@@ -16,8 +16,12 @@ from t1_usb import (
 )
 
 FIXTURE = Path(__file__).resolve().parent / "ibridge-descriptors.bin"
+DIAGNOSE = Path(__file__).resolve().parent.parent / "t1-touchid-diagnose"
 VERIFY = Path(__file__).resolve().parent.parent / "t1-touchid-verify"
 RECONFIGURE = Path(__file__).resolve().parent.parent / "t1-sep-reconfigure.sh"
+ROOT = Path(__file__).resolve().parents[2]
+IBRIDGE = ROOT / "drivers" / "appleibridge" / "apple-ibridge.c"
+INSTALL = ROOT / "install.sh"
 
 
 class T1UsbTests(unittest.TestCase):
@@ -41,19 +45,6 @@ class T1UsbTests(unittest.TestCase):
         self.assertEqual(sep.ep_out, 0x05)
         self.assertEqual(sep.ep_in, 0x88)
 
-    def test_kernelrelay_header_roundtrip(self):
-        hdr = KRHeader(b"CMD\x00", 3, 1, 0x1122334455667788, 0xA, 32, 16)
-        blob = hdr.pack()
-        self.assertEqual(len(blob), KR_HEADER_SIZE)
-        back = KRHeader.unpack(blob)
-        self.assertEqual(back.fourcc, b"CMD\x00")
-        self.assertEqual(back.msg_index, 3)
-        self.assertEqual(back.has_buffer, 1)
-        self.assertEqual(back.reply_to, 0x1122334455667788)
-        self.assertEqual(back.cmd, 0xA)
-        self.assertEqual(back.msg_length, 32)
-        self.assertEqual(back.data_length, 16)
-
     def test_find_sep_rejects_wrong_vid(self):
         raw = bytearray(self.raw)
         # patch idVendor in the device descriptor (bytes 8-9 of first desc)
@@ -64,10 +55,10 @@ class T1UsbTests(unittest.TestCase):
 
     def test_verify_cli_describe_fixture(self):
         env = os.environ.copy()
-        env["PYTHONPATH"] = str(VERIFY.parent)
+        env["PYTHONPATH"] = str(DIAGNOSE.parent)
         proc = subprocess.run(
-            [sys.executable, str(VERIFY), "--describe", "--descriptors", str(FIXTURE)],
-            cwd=str(VERIFY.parent),
+            [sys.executable, str(DIAGNOSE), "--describe", "--descriptors", str(FIXTURE)],
+            cwd=str(DIAGNOSE.parent),
             env=env,
             capture_output=True,
             text=True,
@@ -78,30 +69,67 @@ class T1UsbTests(unittest.TestCase):
         self.assertIn("out=0x05 in=0x88", out)
         self.assertIn("sep_in_config2=True", out)
 
-    def test_verify_transport_config2_is_opt_in(self):
+    def test_verify_transport_never_switches_configuration(self):
         sep = find_sep_interface(self.raw)
-        self.assertEqual(verify_transport(1, sep), "ep0")
-        self.assertEqual(verify_transport(None, sep), "ep0")
+        self.assertEqual(verify_transport(1, sep), "unavailable")
+        self.assertEqual(verify_transport(None, sep), "unavailable")
         self.assertEqual(verify_transport(2, sep), "bulk")
-        self.assertEqual(verify_transport(1, sep, allow_config2=True), "set-config2")
         env = os.environ.copy()
-        env["PYTHONPATH"] = str(VERIFY.parent)
+        env["PYTHONPATH"] = str(DIAGNOSE.parent)
         help_out = subprocess.run(
-            [sys.executable, str(VERIFY), "--help"],
-            cwd=str(VERIFY.parent),
+            [sys.executable, str(DIAGNOSE), "--help"],
+            cwd=str(DIAGNOSE.parent),
             env=env,
             capture_output=True,
             text=True,
             check=True,
         ).stdout
-        self.assertIn("--allow-config2", help_out)
-        env = os.environ.copy()
-        env["PYTHONPATH"] = str(VERIFY.parent)
-        # Must not actually switch USB; describe fixture path only.
-        src = (VERIFY.parent / "t1-touchid-verify").read_text()
-        self.assertIn("deadlocks iBridge USB", src)
+        self.assertNotIn("--allow-config2", help_out)
+        src = DIAGNOSE.read_text()
+        relay = (DIAGNOSE.parent / "t1_relay.py").read_text()
+        self.assertNotIn("libusb_set_configuration", relay)
+        self.assertNotIn("auto_detach", relay)
+        self.assertNotIn("bulk_out", relay)
+        self.assertNotIn("control_transfer", relay)
+        self.assertNotIn("libusb_set_configuration", src)
+        self.assertNotIn("verify-match", src)
         script = RECONFIGURE.read_text()
         self.assertNotIn('echo 2', script)
+
+    def test_legacy_verify_entry_point_always_fails_closed(self):
+        for args in ([], ["--probe"], ["--describe"]):
+            proc = subprocess.run(
+                ["bash", str(VERIFY), *args],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(proc.returncode, 2)
+            self.assertIn("retired", proc.stderr)
+
+        no_action = subprocess.run(
+            [sys.executable, str(DIAGNOSE)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(no_action.returncode, 2)
+        self.assertIn("required", no_action.stderr)
+
+    def test_installed_ibridge_driver_cannot_switch_usb_configuration(self):
+        src = IBRIDGE.read_text()
+        self.assertIn('static char *tb_mode_param = "keyboard";', src)
+        self.assertIn("refusing live Touch Bar config switch", src)
+        self.assertNotIn("usb_set_configuration(udev", src)
+        self.assertNotIn("usb_driver_set_configuration(udev", src)
+        self.assertFalse(
+            (IBRIDGE.parent / "patches" / "apple-ibridge.patch").exists(),
+            "unsafe historical patch must not be reintroduced",
+        )
+        self.assertIn(
+            "refusing unsafe appleibridge source",
+            INSTALL.read_text(),
+        )
 
     def test_reconfigure_script_refuses_set_configuration(self):
         proc = subprocess.run(
