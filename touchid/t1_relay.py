@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import ctypes
 import ctypes.util
+import signal
 import struct
 from dataclasses import dataclass
 from pathlib import Path
@@ -115,26 +116,41 @@ def _libusb():
         ctypes.c_uint,
     ]
     lib.libusb_control_transfer.restype = ctypes.c_int
+    lib.libusb_set_configuration.argtypes = [ctypes.c_void_p, ctypes.c_int]
+    lib.libusb_set_configuration.restype = ctypes.c_int
+    lib.libusb_kernel_driver_active.argtypes = [ctypes.c_void_p, ctypes.c_int]
+    lib.libusb_kernel_driver_active.restype = ctypes.c_int
+    lib.libusb_detach_kernel_driver.argtypes = [ctypes.c_void_p, ctypes.c_int]
+    lib.libusb_detach_kernel_driver.restype = ctypes.c_int
     return lib
 
 
-def verify_transport(live_config: int | None, sep: SepInterface) -> str:
-    """How to talk to KernelRelay without SET_CONFIGURATION.
+def verify_transport(
+    live_config: int | None, sep: SepInterface, allow_config2: bool = False
+) -> str:
+    """How to reach KernelRelay.
 
     'bulk' — live USB config already exposes iface 7.
-    'ep0'  — config 1: try vendor control on the default pipe only.
-    Never returns a 'set-config' action; that deadlocks this chassis.
+    'set-config2' — opt-in: libusb_set_configuration(2) then bulk (takes TB/webcam down).
+    'ep0' — config 1 vendor control only.
     """
     if live_config == sep.config:
         return "bulk"
+    if allow_config2:
+        return "set-config2"
     return "ep0"
 
 
 class SepPipe:
-    """Bulk pipe to KernelRelayHost interface. Does not switch USB config."""
+    """Bulk pipe to KernelRelayHost interface 7.
 
-    def __init__(self, sep: SepInterface):
+    Pass switch_to=2 only with an explicit CLI opt-in. Restores config 1 on close.
+    """
+
+    def __init__(self, sep: SepInterface, switch_to: int | None = None):
         self.sep = sep
+        self._switch_to = switch_to
+        self._switched = False
         self._lib = _libusb()
         self._ctx = ctypes.c_void_p()
         rc = self._lib.libusb_init(ctypes.byref(self._ctx))
@@ -147,12 +163,39 @@ class SepPipe:
             self._lib.libusb_exit(self._ctx)
             raise RuntimeError("open 05ac:8600 failed (need root / config 2)")
         self._lib.libusb_set_auto_detach_kernel_driver(self._dev, 1)
-        # Never change bConfigurationValue: that deadlocks 05ac:8600 on this A1707.
+        if switch_to is not None:
+            self._detach_all()
+            self._set_config(switch_to)
+            self._switched = True
         rc = self._lib.libusb_claim_interface(self._dev, sep.interface)
         if rc != LIBUSB_SUCCESS:
+            if self._switched:
+                try:
+                    self._set_config(1)
+                except Exception:
+                    pass
             self._lib.libusb_close(self._dev)
             self._lib.libusb_exit(self._ctx)
             raise LibusbError(rc, f"claim interface {sep.interface}")
+
+    def _detach_all(self) -> None:
+        for i in range(8):
+            if self._lib.libusb_kernel_driver_active(self._dev, i) == 1:
+                self._lib.libusb_detach_kernel_driver(self._dev, i)
+
+    def _set_config(self, n: int) -> None:
+        def _boom(signum, frame):
+            raise TimeoutError(f"libusb_set_configuration({n}) timed out")
+
+        old = signal.signal(signal.SIGALRM, _boom)
+        signal.alarm(8)
+        try:
+            rc = self._lib.libusb_set_configuration(self._dev, n)
+        finally:
+            signal.alarm(0)
+            signal.signal(signal.SIGALRM, old)
+        if rc != LIBUSB_SUCCESS:
+            raise LibusbError(rc, f"set_configuration({n})")
 
     def configuration(self) -> int:
         cfg = ctypes.c_int()
@@ -194,7 +237,15 @@ class SepPipe:
 
     def close(self) -> None:
         if getattr(self, "_dev", None):
-            self._lib.libusb_release_interface(self._dev, self.sep.interface)
+            try:
+                self._lib.libusb_release_interface(self._dev, self.sep.interface)
+            except Exception:
+                pass
+            if self._switched:
+                try:
+                    self._set_config(1)
+                except Exception as e:
+                    print(f"restore config 1 failed: {e}", flush=True)
             self._lib.libusb_close(self._dev)
             self._dev = None
         if getattr(self, "_ctx", None):

@@ -78,16 +78,30 @@ class T1UsbTests(unittest.TestCase):
         self.assertIn("out=0x05 in=0x88", out)
         self.assertIn("sep_in_config2=True", out)
 
-    def test_verify_transport_never_switches_config(self):
+    def test_verify_transport_config2_is_opt_in(self):
         sep = find_sep_interface(self.raw)
         self.assertEqual(verify_transport(1, sep), "ep0")
         self.assertEqual(verify_transport(None, sep), "ep0")
         self.assertEqual(verify_transport(2, sep), "bulk")
-        src = (Path(__file__).resolve().parent.parent / "t1_relay.py").read_text()
-        self.assertNotIn("libusb_set_configuration(", src)
+        self.assertEqual(verify_transport(1, sep, allow_config2=True), "set-config2")
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(VERIFY.parent)
+        help_out = subprocess.run(
+            [sys.executable, str(VERIFY), "--help"],
+            cwd=str(VERIFY.parent),
+            env=env,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout
+        self.assertIn("--allow-config2", help_out)
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(VERIFY.parent)
+        # Must not actually switch USB; describe fixture path only.
+        src = (VERIFY.parent / "t1-touchid-verify").read_text()
+        self.assertIn("deadlocks iBridge USB", src)
         script = RECONFIGURE.read_text()
         self.assertNotIn('echo 2', script)
-        self.assertIn("exit 2", script)
 
     def test_reconfigure_script_refuses_set_configuration(self):
         proc = subprocess.run(

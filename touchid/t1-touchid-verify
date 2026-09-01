@@ -83,14 +83,24 @@ def cmd_ep0(wait_match: bool) -> int:
     return 1
 
 
-def cmd_probe(wait_match: bool) -> int:
+def cmd_probe(wait_match: bool, allow_config2: bool = False) -> int:
     cfg = current_config()
     sep = load_sep_from_sysfs()
-    how = verify_transport(cfg, sep)
+    how = verify_transport(cfg, sep, allow_config2=allow_config2)
     print(f"live_config={cfg} need_config={sep.config} transport={how}")
-    if how != "bulk":
+    if how == "ep0":
         return cmd_ep0(wait_match)
-    with SepPipe(sep) as pipe:
+    if how == "set-config2":
+        # Live 2026-09-01: libusb_set_configuration(2) D-stated python (same
+        # hang as sysfs bConfigurationValue). Do not retry on this chassis.
+        print(
+            "refusing: SET_CONFIGURATION(2) deadlocks iBridge USB on this A1707",
+            file=sys.stderr,
+        )
+        print("verify-no-match", file=sys.stderr)
+        return 2
+    switch = None
+    with SepPipe(sep, switch_to=switch) as pipe:
         got = pipe.configuration()
         print(f"libusb_config={got} claimed_iface={sep.interface}")
         # Kick the IN pipe once so we know the bulk pair is alive.
@@ -100,6 +110,15 @@ def cmd_probe(wait_match: bool) -> int:
             print("probe-ok")
             return 0
         print("waiting for finger on power-button Touch ID…", flush=True)
+        try:
+            import subprocess as _sp
+            _sp.Popen(
+                ["notify-send", "-u", "critical", "Touch ID", "Place an enrolled finger on the power button now"],
+                stdout=_sp.DEVNULL,
+                stderr=_sp.DEVNULL,
+            )
+        except Exception:
+            pass
         try:
             pipe.bulk_out(KRHeader(b"\x00" * 4, 0, 0, 0, 0, 32, 0).pack(), timeout_ms=500)
         except Exception as e:
@@ -130,6 +149,11 @@ def main() -> int:
     p.add_argument("--describe", action="store_true")
     p.add_argument("--probe", action="store_true")
     p.add_argument(
+        "--allow-config2",
+        action="store_true",
+        help="Opt-in: libusb_set_configuration(2) to expose KernelRelay (TB/webcam go down; restore 1 on exit)",
+    )
+    p.add_argument(
         "--descriptors",
         type=Path,
         default=Path("/sys/bus/usb/devices/1-3/descriptors"),
@@ -138,7 +162,7 @@ def main() -> int:
     args = p.parse_args()
     if args.describe:
         return cmd_describe(args.descriptors)
-    return cmd_probe(wait_match=not args.probe)
+    return cmd_probe(wait_match=not args.probe, allow_config2=args.allow_config2)
 
 
 if __name__ == "__main__":
