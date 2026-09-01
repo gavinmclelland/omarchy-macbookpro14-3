@@ -23,7 +23,7 @@ Written 2026-08-25–26. This is what actually landed on the laptop, including f
 | Display brightness | `gmux_backlight` |
 | Sleep | `/sys/power/mem_sleep` is `s2idle [deep]` — current mode **deep**, never tested this boot |
 
-Four T1 functions share the iBridge: Touch Bar, FaceTime webcam, Touch ID (no Linux driver), ALS. Speakers and mics are CS8409/CS42L83 + MAX98706, not the T1.
+Four T1 functions share the iBridge: Touch Bar, FaceTime webcam, Touch ID (no Linux path, [#20](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/20)), ALS. Speakers and mics are CS8409/CS42L83 + MAX98706, not the T1.
 
 No iBridge die temperature is exposed. Closest skin sensors (`Ts0P`/`Ts1P`) were ~30–32 °C while CPU ~78–81 °C and GPU edge ~64 °C.
 
@@ -169,6 +169,7 @@ nvme0n1p4  231G  LUKS/btrfs        Omarchy
 | [#14](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/14) speaker quality | Layout 57 + invert + delay. DSP unity; TB volume is physical 4ch |
 | [#2](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/2) Polaris GPU-process FATAL | Chromium mitigated; Spotify CEF still GPU. Per-app `--disable-gpu` or a real Mesa/BAR fix |
 | [#15](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/15) Spotify CEF abort | PID 67730 `substr` trap. PID 9990 (16:43) is #2, not this |
+| [#20](https://github.com/gavinmclelland/omarchy-macbookpro14-3/issues/20) Touch ID / T1 SEP | Not a USB reader. `omarchy-hw-fingerprint` is 1. Do not install T2/fprintd yet |
 
 ## Open better (parked)
 
